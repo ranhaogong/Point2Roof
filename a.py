@@ -1,50 +1,26 @@
-from collections import defaultdict
+import open3d as o3d
+import numpy as np
 
-def find_faces(edges):
-    # 构建邻接表
-    adj_list = defaultdict(set)
-    for edge in edges:
-        adj_list[edge[0]].add(edge[1])
-        adj_list[edge[1]].add(edge[0])
+def ply_to_xyz(ply_file, xyz_file):
+    """
+    将 .ply 文件转换为 .xyz 文件
+    :param ply_file: 输入的 .ply 文件路径
+    :param xyz_file: 输出的 .xyz 文件路径
+    """
+    # 读取 .ply 文件
+    mesh = o3d.io.read_triangle_mesh(ply_file)
 
-    visited = set()  # 用于存储访问过的边
-    faces = []  # 存储所有找到的面
+    # 获取点云的顶点信息
+    vertices = np.asarray(mesh.vertices)
 
-    def dfs(current, start, path):
-        """
-        深度优先搜索寻找环
-        :param current: 当前顶点
-        :param start: 起始顶点（用于判断闭环）
-        :param path: 当前路径
-        """
-        for neighbor in adj_list[current]:
-            if neighbor == start and len(path) > 2:  # 找到一个闭环
-                face = sorted(path)  # 对环的顶点排序，避免重复
-                if face not in faces:  # 如果未记录，添加到结果
-                    faces.append(face)
-            elif neighbor not in path:  # 避免重复访问
-                dfs(neighbor, start, path + [neighbor])
+    # 将顶点坐标保存为 .xyz 文件
+    with open(xyz_file, 'w') as f:
+        for vertex in vertices:
+            f.write(f"{vertex[0]} {vertex[1]} {vertex[2]}\n")
 
-    # 遍历所有边，尝试寻找环
-    for edge in edges:
-        v1, v2 = edge
-        if tuple(sorted(edge)) not in visited:
-            visited.add(tuple(sorted(edge)))  # 标记边为已访问
-            dfs(v1, v1, [v1])  # 从当前边的第一个顶点开始搜索
+    print(f"成功将 {ply_file} 转换为 {xyz_file}")
 
-    return faces
-
-# 示例数据
-edges = [
-    [1, 2],
-    [2, 3],
-    [3, 4],
-    [4, 1],
-    [2, 4],
-    [3, 5],
-    [5, 1]
-]
-
-# 调用函数
-faces = find_faces(edges)
-print("找到的面:", faces)
+# 示例使用
+ply_file = "/data/haoran/Point2Roof/testmydata/0/BID_13250_12127916-b009-46eb-a02b-cbaff4842af7.ply"  # 输入的 .ply 文件路径
+xyz_file = "/data/haoran/Point2Roof/testmydata/0/points.xyz"  # 输出的 .xyz 文件路径
+ply_to_xyz(ply_file, xyz_file)

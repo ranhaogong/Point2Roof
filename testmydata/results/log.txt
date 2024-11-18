@@ -1,0 +1,572 @@
+2024-11-18 13:31:16,130   INFO  **********************Start logging**********************
+2024-11-18 13:31:16,130   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 13:31:16,130   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 13:31:16,130   INFO  batch_size       1
+2024-11-18 13:31:16,130   INFO  gpu              1
+2024-11-18 13:31:16,130   INFO  test_tag         pts6
+2024-11-18 13:31:16,130   INFO  
+cfg.DATA = edict()
+2024-11-18 13:31:16,130   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 13:31:16,130   INFO  
+cfg.MODEL = edict()
+2024-11-18 13:31:16,130   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 13:31:16,130   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 13:31:16,130   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 13:31:16,130   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.05
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 13:31:16,130   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 13:31:16,130   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 13:31:16,131   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 13:31:16,131   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 13:31:16,131   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 13:31:16,131   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 13:31:16,131   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 13:31:16,131   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 13:31:16,131   INFO  Total samples: 1
+2024-11-18 13:31:16,261   INFO  ==> Loading parameters from checkpoint
+2024-11-18 13:31:16,294   INFO  ==> Done
+2024-11-18 13:31:16,294   INFO  **********************Start visualizing**********************
+2024-11-18 13:31:43,923   INFO  **********************Start logging**********************
+2024-11-18 13:31:43,923   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 13:31:43,923   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 13:31:43,923   INFO  batch_size       1
+2024-11-18 13:31:43,923   INFO  gpu              1
+2024-11-18 13:31:43,923   INFO  test_tag         pts6
+2024-11-18 13:31:43,923   INFO  
+cfg.DATA = edict()
+2024-11-18 13:31:43,923   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL = edict()
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.05
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 13:31:43,923   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 13:31:43,923   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 13:31:43,923   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 13:31:43,923   INFO  Total samples: 1
+2024-11-18 13:31:44,057   INFO  ==> Loading parameters from checkpoint
+2024-11-18 13:31:44,091   INFO  ==> Done
+2024-11-18 13:31:44,092   INFO  **********************Start visualizing**********************
+2024-11-18 13:32:23,162   INFO  **********************Start logging**********************
+2024-11-18 13:32:23,164   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 13:32:23,164   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 13:32:23,164   INFO  batch_size       1
+2024-11-18 13:32:23,164   INFO  gpu              1
+2024-11-18 13:32:23,164   INFO  test_tag         pts6
+2024-11-18 13:32:23,164   INFO  
+cfg.DATA = edict()
+2024-11-18 13:32:23,164   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 13:32:23,164   INFO  
+cfg.MODEL = edict()
+2024-11-18 13:32:23,164   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 13:32:23,164   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 13:32:23,165   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 13:32:23,165   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 13:32:23,165   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 13:32:23,165   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 13:32:23,165   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 13:32:23,165   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 13:32:23,165   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 13:32:23,165   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.05
+2024-11-18 13:32:23,165   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 13:32:23,165   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 13:32:23,165   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 13:32:23,166   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 13:32:23,166   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 13:32:23,166   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 13:32:23,166   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 13:32:23,166   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 13:32:23,166   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 13:32:23,166   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 13:32:23,166   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 13:32:23,166   INFO  Total samples: 1
+2024-11-18 13:32:23,308   INFO  ==> Loading parameters from checkpoint
+2024-11-18 13:32:23,536   INFO  ==> Done
+2024-11-18 13:32:27,280   INFO  **********************Start visualizing**********************
+2024-11-18 13:39:02,871   INFO  **********************Start logging**********************
+2024-11-18 13:39:02,872   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 13:39:02,872   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 13:39:02,873   INFO  batch_size       1
+2024-11-18 13:39:02,873   INFO  gpu              1
+2024-11-18 13:39:02,873   INFO  test_tag         pts6
+2024-11-18 13:39:02,873   INFO  
+cfg.DATA = edict()
+2024-11-18 13:39:02,873   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 13:39:02,873   INFO  
+cfg.MODEL = edict()
+2024-11-18 13:39:02,873   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 13:39:02,873   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 13:39:02,873   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 13:39:02,873   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 13:39:02,873   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 13:39:02,874   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 13:39:02,874   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 13:39:02,874   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 13:39:02,874   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 13:39:02,874   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.05
+2024-11-18 13:39:02,874   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 13:39:02,874   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 13:39:02,874   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 13:39:02,874   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 13:39:02,874   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 13:39:02,874   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 13:39:02,874   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 13:39:02,875   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 13:39:02,875   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 13:39:02,875   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 13:39:02,875   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 13:39:02,875   INFO  Total samples: 1
+2024-11-18 13:39:03,055   INFO  ==> Loading parameters from checkpoint
+2024-11-18 13:39:03,288   INFO  ==> Done
+2024-11-18 13:39:07,869   INFO  **********************Start visualizing**********************
+2024-11-18 13:39:25,633   INFO  **********************Start logging**********************
+2024-11-18 13:39:25,634   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 13:39:25,634   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 13:39:25,634   INFO  batch_size       1
+2024-11-18 13:39:25,634   INFO  gpu              1
+2024-11-18 13:39:25,634   INFO  test_tag         pts6
+2024-11-18 13:39:25,634   INFO  
+cfg.DATA = edict()
+2024-11-18 13:39:25,634   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 13:39:25,635   INFO  
+cfg.MODEL = edict()
+2024-11-18 13:39:25,635   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 13:39:25,635   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 13:39:25,635   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 13:39:25,635   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 13:39:25,635   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 13:39:25,635   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 13:39:25,635   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 13:39:25,635   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 13:39:25,635   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 13:39:25,635   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.05
+2024-11-18 13:39:25,636   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 13:39:25,636   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 13:39:25,636   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 13:39:25,636   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 13:39:25,636   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 13:39:25,636   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 13:39:25,636   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 13:39:25,636   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 13:39:25,636   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 13:39:25,636   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 13:39:25,636   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 13:39:25,637   INFO  Total samples: 1
+2024-11-18 13:39:26,021   INFO  ==> Loading parameters from checkpoint
+2024-11-18 13:39:26,123   INFO  ==> Done
+2024-11-18 13:39:29,078   INFO  **********************Start visualizing**********************
+2024-11-18 14:01:04,086   INFO  **********************Start logging**********************
+2024-11-18 14:01:04,086   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 14:01:04,086   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 14:01:04,087   INFO  batch_size       1
+2024-11-18 14:01:04,087   INFO  gpu              1
+2024-11-18 14:01:04,087   INFO  test_tag         pts6
+2024-11-18 14:01:04,087   INFO  
+cfg.DATA = edict()
+2024-11-18 14:01:04,087   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 14:01:04,087   INFO  
+cfg.MODEL = edict()
+2024-11-18 14:01:04,087   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 14:01:04,087   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 14:01:04,087   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 14:01:04,087   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 14:01:04,088   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 14:01:04,088   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 14:01:04,088   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 14:01:04,088   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 14:01:04,088   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 14:01:04,088   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.05
+2024-11-18 14:01:04,088   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 14:01:04,088   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 14:01:04,088   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 14:01:04,088   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 14:01:04,089   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 14:01:04,089   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 14:01:04,089   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 14:01:04,089   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 14:01:04,089   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 14:01:04,089   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 14:01:04,089   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 14:01:04,089   INFO  Total samples: 1
+2024-11-18 14:01:04,292   INFO  ==> Loading parameters from checkpoint
+2024-11-18 14:01:04,390   INFO  ==> Done
+2024-11-18 14:01:07,707   INFO  **********************Start visualizing**********************
+2024-11-18 14:01:56,508   INFO  **********************Start logging**********************
+2024-11-18 14:01:56,508   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 14:01:56,508   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 14:01:56,509   INFO  batch_size       1
+2024-11-18 14:01:56,509   INFO  gpu              1
+2024-11-18 14:01:56,509   INFO  test_tag         pts6
+2024-11-18 14:01:56,509   INFO  
+cfg.DATA = edict()
+2024-11-18 14:01:56,509   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 14:01:56,509   INFO  
+cfg.MODEL = edict()
+2024-11-18 14:01:56,509   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 14:01:56,509   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 14:01:56,509   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 14:01:56,509   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 14:01:56,509   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 14:01:56,510   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 14:01:56,510   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 14:01:56,510   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 14:01:56,510   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 14:01:56,510   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.05
+2024-11-18 14:01:56,510   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 14:01:56,510   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 14:01:56,510   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 14:01:56,510   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 14:01:56,510   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 14:01:56,510   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 14:01:56,510   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 14:01:56,511   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 14:01:56,511   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 14:01:56,511   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 14:01:56,511   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 14:01:56,511   INFO  Total samples: 1
+2024-11-18 14:01:56,688   INFO  ==> Loading parameters from checkpoint
+2024-11-18 14:01:56,783   INFO  ==> Done
+2024-11-18 14:01:58,617   INFO  **********************Start visualizing**********************
+2024-11-18 14:06:33,720   INFO  **********************Start logging**********************
+2024-11-18 14:06:33,720   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 14:06:33,720   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 14:06:33,720   INFO  batch_size       1
+2024-11-18 14:06:33,720   INFO  gpu              1
+2024-11-18 14:06:33,720   INFO  test_tag         pts6
+2024-11-18 14:06:33,720   INFO  
+cfg.DATA = edict()
+2024-11-18 14:06:33,720   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL = edict()
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.5
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 14:06:33,720   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 14:06:33,720   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 14:06:33,720   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 14:06:33,720   INFO  Total samples: 1
+2024-11-18 14:06:34,028   INFO  ==> Loading parameters from checkpoint
+2024-11-18 14:06:34,061   INFO  ==> Done
+2024-11-18 14:06:34,061   INFO  **********************Start visualizing**********************
+2024-11-18 14:06:47,893   INFO  **********************Start logging**********************
+2024-11-18 14:06:47,894   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 14:06:47,894   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 14:06:47,894   INFO  batch_size       1
+2024-11-18 14:06:47,894   INFO  gpu              1
+2024-11-18 14:06:47,894   INFO  test_tag         pts6
+2024-11-18 14:06:47,894   INFO  
+cfg.DATA = edict()
+2024-11-18 14:06:47,894   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL = edict()
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 1
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 14:06:47,894   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 14:06:47,894   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 14:06:47,894   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 14:06:47,894   INFO  Total samples: 1
+2024-11-18 14:06:48,024   INFO  ==> Loading parameters from checkpoint
+2024-11-18 14:06:48,057   INFO  ==> Done
+2024-11-18 14:06:48,058   INFO  **********************Start visualizing**********************
+2024-11-18 14:08:37,808   INFO  **********************Start logging**********************
+2024-11-18 14:08:37,808   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 14:08:37,808   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 14:08:37,808   INFO  batch_size       1
+2024-11-18 14:08:37,808   INFO  gpu              1
+2024-11-18 14:08:37,808   INFO  test_tag         pts6
+2024-11-18 14:08:37,808   INFO  
+cfg.DATA = edict()
+2024-11-18 14:08:37,808   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL = edict()
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 1
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [1, 2]
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 14:08:37,808   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 14:08:37,808   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 14:08:37,808   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 14:08:37,808   INFO  Total samples: 1
+2024-11-18 14:08:37,942   INFO  ==> Loading parameters from checkpoint
+2024-11-18 14:08:37,975   INFO  ==> Done
+2024-11-18 14:08:37,975   INFO  **********************Start visualizing**********************
+2024-11-18 14:08:49,861   INFO  **********************Start logging**********************
+2024-11-18 14:08:49,862   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 14:08:49,862   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 14:08:49,862   INFO  batch_size       1
+2024-11-18 14:08:49,862   INFO  gpu              1
+2024-11-18 14:08:49,862   INFO  test_tag         pts6
+2024-11-18 14:08:49,862   INFO  
+cfg.DATA = edict()
+2024-11-18 14:08:49,862   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL = edict()
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 2
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 1
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [1, 2]
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 14:08:49,862   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 14:08:49,862   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 14:08:49,862   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 14:08:49,862   INFO  Total samples: 1
+2024-11-18 14:08:50,260   INFO  ==> Loading parameters from checkpoint
+2024-11-18 14:08:50,293   INFO  ==> Done
+2024-11-18 14:08:50,294   INFO  **********************Start visualizing**********************
+2024-11-18 14:09:14,869   INFO  **********************Start logging**********************
+2024-11-18 14:09:14,869   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 14:09:14,869   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 14:09:14,869   INFO  batch_size       1
+2024-11-18 14:09:14,869   INFO  gpu              1
+2024-11-18 14:09:14,869   INFO  test_tag         pts6
+2024-11-18 14:09:14,869   INFO  
+cfg.DATA = edict()
+2024-11-18 14:09:14,869   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL = edict()
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.PointNet2.PosRadius: 1.5
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 1
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 2
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 1
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [1, 2]
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 14:09:14,869   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 14:09:14,869   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 14:09:14,869   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 14:09:14,869   INFO  Total samples: 1
+2024-11-18 14:09:15,213   INFO  ==> Loading parameters from checkpoint
+2024-11-18 14:09:15,246   INFO  ==> Done
+2024-11-18 14:09:15,247   INFO  **********************Start visualizing**********************
+2024-11-18 14:09:27,388   INFO  **********************Start logging**********************
+2024-11-18 14:09:27,388   INFO  data_path        /data/haoran/Point2Roof/testmydata
+2024-11-18 14:09:27,388   INFO  cfg_file         ./model_cfg.yaml
+2024-11-18 14:09:27,388   INFO  batch_size       1
+2024-11-18 14:09:27,388   INFO  gpu              1
+2024-11-18 14:09:27,389   INFO  test_tag         pts6
+2024-11-18 14:09:27,389   INFO  
+cfg.DATA = edict()
+2024-11-18 14:09:27,389   INFO  cfg.DATA.NPOINT: 1024
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL = edict()
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL.PointNet2 = edict()
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.PointNet2.PosRadius: 0.15
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL.PointNet2.LossWeight = edict()
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.PointNet2.LossWeight.cls_weight: 1.0
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.PointNet2.LossWeight.reg_weight: 1.0
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL.ClusterRefineNet = edict()
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.ClusterRefineNet.ScoreThresh: 0.5
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.ClusterRefineNet.MatchRadius: 0.2
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL.ClusterRefineNet.Cluster = edict()
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.ClusterRefineNet.Cluster.eps: 0.05
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.ClusterRefineNet.Cluster.min_pts: 5
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL.ClusterRefineNet.RefineSA = edict()
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Radii: [0.1, 0.2]
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.Nsamples: [16, 16]
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.ClusterRefineNet.RefineSA.MLPs: [[128, 128], [128, 128]]
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL.ClusterRefineNet.LossWeight = edict()
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.ClusterRefineNet.LossWeight.reg_weight: 1.0
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL.EdgeAttentionNet = edict()
+2024-11-18 14:09:27,389   INFO  
+cfg.MODEL.EdgeAttentionNet.LossWeight = edict()
+2024-11-18 14:09:27,389   INFO  cfg.MODEL.EdgeAttentionNet.LossWeight.cls_weight: 1.0
+2024-11-18 14:09:27,389   INFO  cfg.ROOT_DIR: /data/haoran/Point2Roof
+2024-11-18 14:09:27,389   INFO  Total samples: 1
+2024-11-18 14:09:27,624   INFO  ==> Loading parameters from checkpoint
+2024-11-18 14:09:27,822   INFO  ==> Done
+2024-11-18 14:09:27,822   INFO  **********************Start visualizing**********************
