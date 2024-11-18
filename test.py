@@ -33,7 +33,7 @@ def main():
     extra_tag = args.test_tag
     output_dir = cfg.ROOT_DIR / 'output' / extra_tag
     assert output_dir.exists(), '%s does not exist!!!' % str(output_dir)
-    ckpt_dir = output_dir #/ 'ckpt'
+    ckpt_dir = output_dir / 'ckpt'
     output_dir = output_dir / 'test'
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -49,14 +49,16 @@ def main():
     net = RoofNet(cfg.MODEL)
     net.cuda()
     net.eval()
-
+    print("ckpt_dir: ", ckpt_dir)
     ckpt_list = glob.glob(str(ckpt_dir / '*checkpoint_epoch_*.pth'))
+    print("ckpt_list: ", ckpt_list)
     if len(ckpt_list) > 0:
         ckpt_list.sort(key=os.path.getmtime)
         model_utils.load_params(net, ckpt_list[-1], logger=logger)
+        print("pth: ", ckpt_list[-1])
 
     logger.info('**********************Start testing**********************')
-    logger.info(net)
+    # logger.info(net)
 
     test_model(net, test_loader, logger)
 
