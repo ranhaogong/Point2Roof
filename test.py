@@ -5,7 +5,7 @@ import argparse
 import datetime
 import glob
 import torch.distributed as dist
-from dataset.data_utils import build_dataloader
+from dataset.data_utils import build_dataloader_RoofN3dDataset
 from test_util import test_model
 from model.roofnet import RoofNet
 from torch import optim
@@ -45,7 +45,7 @@ def main():
         logger.info('{:16} {}'.format(key, val))
     common_utils.log_config_to_file(cfg, logger=logger)
 
-    test_loader = build_dataloader(args.data_path, args.batch_size, cfg.DATA, training=False, logger=logger)
+    test_loader = build_dataloader_RoofN3dDataset(args.data_path, args.batch_size, cfg.DATA, training=False, logger=logger)
     net = RoofNet(cfg.MODEL)
     net.cuda()
     net.eval()

@@ -73,6 +73,7 @@ class PointNet2(nn.Module):
 
         x = self.drop(self.shared_fc(l0_fea))
         pred_offset = self.offset_fc(x).permute(0, 2, 1)
+        # BxNx1
         pred_cls = self.cls_fc(x).permute(0, 2, 1)
         if self.training:
             self.train_dict.update({

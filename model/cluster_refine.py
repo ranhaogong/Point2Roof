@@ -59,9 +59,15 @@ class ClusterRefineNet(nn.Module):
     def forward(self, batch_dict):
         offset_pts = batch_dict['points'].clone()
         offset = batch_dict['point_pred_offset']
+        # pts_score: N
         pts_score = batch_dict['point_pred_score']
+        # import pickle
+        # with open('pts_score.pkl', 'wb') as file:
+        #     pickle.dump(pts_score, file)
         score_thresh = self.model_cfg.ScoreThresh
+        # offset_pts: Nx3
         offset_pts[pts_score > score_thresh] += offset[pts_score > score_thresh]
+        # pts_cluster: Nx3
         pts_cluster = offset_pts.new_ones(offset_pts.shape) * -10
         pts_cluster[pts_score > score_thresh] = offset_pts[pts_score > score_thresh]
         cluster_idx = dbscan_cluster(self.model_cfg.Cluster.eps, self.model_cfg.Cluster.min_pts, pts_cluster)

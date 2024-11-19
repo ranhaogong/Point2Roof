@@ -84,7 +84,7 @@ def visualize_model(model, data_loader, logger, visualize_dir):
                 batch = model(batch)
                 load_data_to_cpu(batch)
             visualize_batch(batch, visualize_dir)
-            # break
+            break
 
 def visualize_batch(batch, visualize_dir):
     batch_size = batch['batch_size']
@@ -119,12 +119,6 @@ def visualize_batch(batch, visualize_dir):
     # print("unnorm", pts_refined * (minMaxPt[0][1] - minMaxPt[0][0]) + minMaxPt[0][0])
     i = 0
     idx = 0
-    mm_pts = batch['minMaxPt']
-    mm_pt = mm_pts[i]
-    minPt = mm_pt[0]
-    maxPt = mm_pt[1]
-    deltaPt = maxPt - minPt
-
     p_pts = pts_refined[pts_pred[:, 0] == i]
     l_pts = pts_label[i]
     l_pts = l_pts[np.sum(l_pts, -1, keepdims=False) > -2e1]
@@ -133,17 +127,6 @@ def visualize_batch(batch, visualize_dir):
     dist_matrix = vec_a.reshape(-1, 1) + vec_b.reshape(1, -1) - 2 * np.matmul(p_pts, np.transpose(l_pts))
     dist_matrix = np.sqrt(dist_matrix + 1e-6)
     p_ind, l_ind = linear_sum_assignment(dist_matrix)
-    mask = dist_matrix[p_ind, l_ind] < 0.1   # 0.1
-    tp_ind, tl_ind = p_ind[mask], l_ind[mask]
-    #dis = np.abs(p_pts[tp_ind] - l_pts[tl_ind])
-    dis = np.abs( ((p_pts[tp_ind]*deltaPt) + minPt) - ((l_pts[tl_ind]*deltaPt) + minPt) )
-
-    statistics = {'tp_pts': 0, 'num_label_pts': 0, 'num_pred_pts': 0, 'pts_bias': np.zeros(3, np.float),
-                      'tp_edges': 0, 'num_label_edges': 0, 'num_pred_edges': 0}
-    statistics['tp_pts'] += tp_ind.shape[0]
-    statistics['num_label_pts'] += l_pts.shape[0]
-    statistics['num_pred_pts'] += p_pts.shape[0]
-    statistics['pts_bias'] += np.sum(dis, 0)
     match_edge = list(itertools.combinations(l_ind, 2))
     match_edge = np.array([tuple(sorted(e)) for e in match_edge])
     score = edge_pred[idx:idx+len(match_edge)]
@@ -184,7 +167,7 @@ def unnorm(pts, minMaxPt):
     return pts
 
 def write_obj(pts, faces, frame_id, file_path):
-    file_path = file_path / (frame_id[0] + ".obj")
+    file_path = file_path + "/" + (frame_id[0] + ".obj")
     print(file_path)
     with open(file_path, 'w') as file:
         for point in pts:

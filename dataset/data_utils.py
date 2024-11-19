@@ -1,11 +1,13 @@
 from torch.utils.data import DataLoader
 #from .roofn3d_dataset import RoofN3dDataset
 from dataset.roofn3d_dataset import RoofN3dDataset
+from dataset.PoznanRD_dataset import PoznanRDDataset
 import numpy as np
 import random
 
 __all__ = {
-    'RoofN3dDataset': RoofN3dDataset
+    'RoofN3dDataset': RoofN3dDataset,
+    'PoznanRDDataset': PoznanRDDataset
 }
 
 class GaussianTransform:
@@ -25,7 +27,7 @@ class GaussianTransform:
             return points
 
 
-def build_dataloader(path, batch_size, data_cfg, workers=16, logger=None, training=True):
+def build_dataloader_RoofN3dDataset(path, batch_size, data_cfg, workers=16, logger=None, training=True):
     path += '/train.txt' if training else '/test.txt'
 
     if training:
@@ -34,6 +36,20 @@ def build_dataloader(path, batch_size, data_cfg, workers=16, logger=None, traini
         trasform = GaussianTransform(sigma= (0.005, 0.010), clip = 10, p = 0.0)
 
     dataset = RoofN3dDataset(path, trasform, data_cfg, logger)
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, pin_memory=True, num_workers=workers, collate_fn=dataset.collate_batch,
+        shuffle=training)
+    return dataloader
+
+def build_dataloader_PoznanRDDataset(path, batch_size, data_cfg, workers=16, logger=None, training=True):
+    path += '/train_img.flist' if training else '/test_img.flist'
+
+    if training:
+        trasform = GaussianTransform(sigma=(0.005, 0.010), clip = 10, p = 0.8)
+    else:
+        trasform = GaussianTransform(sigma= (0.005, 0.010), clip = 10, p = 0.0)
+
+    dataset = PoznanRDDataset(path, training, trasform, data_cfg, logger)
     dataloader = DataLoader(
         dataset, batch_size=batch_size, pin_memory=True, num_workers=workers, collate_fn=dataset.collate_batch,
         shuffle=training)
