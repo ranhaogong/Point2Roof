@@ -17,6 +17,7 @@ from utils import common_utils
 from pathlib import Path
 from model import model_utils
 from collections import defaultdict
+from model.pointnet_util import BallCenterQuery
 from scipy.optimize import linear_sum_assignment
 
 def parse_config():
@@ -78,6 +79,7 @@ def visualize_model(model, data_loader, logger, visualize_dir):
     dataloader_iter = iter(data_loader)
     with tqdm.trange(0, len(data_loader), desc='test', dynamic_ncols=True) as tbar:
         model.use_edge = True
+        i = 0
         for cur_it in tbar:
             batch = next(dataloader_iter)
             load_data_to_gpu(batch)
@@ -85,6 +87,9 @@ def visualize_model(model, data_loader, logger, visualize_dir):
                 batch = model(batch)
                 load_data_to_cpu(batch)
             visualize_batch(batch, visualize_dir)
+            i += 1
+            if i == 9:
+                break
             # break
 
 def visualize_batch(batch, visualize_dir):
@@ -97,10 +102,10 @@ def visualize_batch(batch, visualize_dir):
     points = batch['points']
     
     point_pred_score = batch['point_pred_score']
-    print("point_pred_score: ", point_pred_score)
-    print("point_pred_score.shape: ", point_pred_score.shape)
-    print("points: ", points)
-    print("points.shape", points.shape)
+    # print("point_pred_score: ", point_pred_score)
+    # print("point_pred_score.shape: ", point_pred_score.shape)
+    # print("points: ", points)
+    # print("points.shape", points.shape)
     points = points[0]
     
     point_pred_score = point_pred_score[0]
@@ -117,6 +122,31 @@ def visualize_batch(batch, visualize_dir):
     pcd.colors = o3d.utility.Vector3dVector(colors / 255.0)  # Open3D 颜色需要在 [0, 1] 范围内
 
     ply_name = "colored_points/" + str(frame_id[0]) + ".ply"
+    # 保存为 PLY 文件
+    o3d.io.write_point_cloud(ply_name, pcd)
+
+    print(f"点云已保存为{ply_name}")
+    
+    offset, cls = assign_targets(batch['points'], batch['vectors'], 0.03)
+    cls = cls.cpu().numpy()
+    # print("offset: ", offset)
+    # print("offset.shape: ", offset.shape)
+    # print("cls: ", cls)
+    # print("cls.shape: ", cls.shape)
+    
+    # 初始化颜色数组
+    colors = np.ones_like(points) * 255  # 默认白色 (255, 255, 255)
+
+    # 将得分 > 0.5 的点标记为红色 (255, 0, 0)
+    cls = cls[0]
+    colors[cls > 0] = [255, 0, 0]
+    
+    # 创建 Open3D 点云对象
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points)
+    pcd.colors = o3d.utility.Vector3dVector(colors / 255.0)  # Open3D 颜色需要在 [0, 1] 范围内
+
+    ply_name = "colored_points/" + str(frame_id[0]) + "_vector_label.ply"
     # 保存为 PLY 文件
     o3d.io.write_point_cloud(ply_name, pcd)
 
@@ -172,6 +202,24 @@ def visualize_batch(batch, visualize_dir):
     pts_refined = unnorm(pts_refined, minMaxPt)
     p = pts_refined
     write_obj(p, match_edge, frame_id, visualize_dir)
+    
+
+def assign_targets(points, gvs, radius):
+    points = torch.from_numpy(points).float().cuda()
+    gvs = torch.from_numpy(gvs).float().cuda()
+    ball_center_query = BallCenterQuery.apply
+    idx = ball_center_query(radius, points, gvs).type(torch.int64)
+    batch_size = gvs.size()[0]
+    idx_add = torch.arange(batch_size).to(idx.device).unsqueeze(-1).repeat(1, idx.shape[-1]) * gvs.shape[1]
+    gvs = gvs.view(-1, 3)
+    idx_add += idx
+    target_points = gvs[idx_add.view(-1)].view(batch_size, -1, 3)
+    dis = target_points - points
+    dis[idx < 0] = 0
+    dis /= radius
+    label = torch.where(idx >= 0, torch.ones(idx.shape).to(idx.device),
+                        torch.zeros(idx.shape).to(idx.device))
+    return dis, label
 
 def eval_process(batch, statistics):
     batch_size = batch['batch_size']

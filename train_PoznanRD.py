@@ -35,6 +35,7 @@ def parse_config():
 
 def main():
     args, cfg = parse_config()
+    
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     extra_tag = args.extra_tag if args.extra_tag is not None \
@@ -48,7 +49,8 @@ def main():
     logger = common_utils.create_logger(log_file)
 
     logger.info('**********************Start logging**********************')
-
+    for key, value in cfg.items():
+        logger.info(f"{key}: {value}")
     train_loader = build_dataloader_PoznanRDDataset(args.data_path, args.batch_size, cfg.DATA, training=True, logger=logger)
 
     net = RoofNet(cfg.MODEL)
