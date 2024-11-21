@@ -1,5 +1,5 @@
 DATA:
-  NPOINT: 1024
+  NPOINT: 4096
 MODEL:
   PointNet2:
     PosRadius: 0.15
