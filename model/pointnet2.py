@@ -299,7 +299,3 @@ class GroupAll(nn.Module):
             new_features = grouped_xyz
 
         return new_features
-
-
-
-

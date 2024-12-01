@@ -37,6 +37,7 @@ def main():
     args, cfg = parse_config()
     
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    # torch.cuda.set_device(1)
 
     extra_tag = args.extra_tag if args.extra_tag is not None \
             else 'model-%s' % datetime.datetime.now().strftime('%Y%m%d')

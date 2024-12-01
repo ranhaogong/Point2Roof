@@ -18,6 +18,7 @@ from pathlib import Path
 from model import model_utils
 from collections import defaultdict
 from model.pointnet_util import BallCenterQuery
+import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
 
 def parse_config():
@@ -35,7 +36,7 @@ def parse_config():
 
 def main():
     args, cfg = parse_config()
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    # os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     extra_tag = args.test_tag
     output_dir = cfg.ROOT_DIR / 'output' / extra_tag
@@ -112,16 +113,18 @@ def visualize_batch(batch, visualize_dir):
 
     # 初始化颜色数组
     colors = np.ones_like(points) * 255  # 默认白色 (255, 255, 255)
-
+    cmap = plt.get_cmap("plasma")  # 可选择不同的颜色映射
+    colors = cmap(point_pred_score)[:, :3]  # 取 RGB 通道，忽略 alpha 通道
+    colors[point_pred_score > 0.5] = [1.0, 0.0, 0.0]
     # 将得分 > 0.5 的点标记为红色 (255, 0, 0)
-    colors[point_pred_score > 0.5] = [255, 0, 0]
+    # colors[point_pred_score > 0.5] = [255, 0, 0]
     
     # 创建 Open3D 点云对象
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
-    pcd.colors = o3d.utility.Vector3dVector(colors / 255.0)  # Open3D 颜色需要在 [0, 1] 范围内
+    pcd.colors = o3d.utility.Vector3dVector(colors)  # Open3D 颜色需要在 [0, 1] 范围内
 
-    ply_name = "colored_points/" + str(frame_id[0]) + ".ply"
+    ply_name = "./output/PoznanRD_2_npoint4096_posradius_005/colored_points/" + str(frame_id[0]) + ".ply"
     # 保存为 PLY 文件
     o3d.io.write_point_cloud(ply_name, pcd)
 
@@ -129,10 +132,10 @@ def visualize_batch(batch, visualize_dir):
     
     offset, cls = assign_targets(batch['points'], batch['vectors'], 0.03)
     cls = cls.cpu().numpy()
-    # print("offset: ", offset)
-    # print("offset.shape: ", offset.shape)
-    # print("cls: ", cls)
-    # print("cls.shape: ", cls.shape)
+    # # print("offset: ", offset)
+    # # print("offset.shape: ", offset.shape)
+    # # print("cls: ", cls)
+    # # print("cls.shape: ", cls.shape)
     
     # 初始化颜色数组
     colors = np.ones_like(points) * 255  # 默认白色 (255, 255, 255)
@@ -146,7 +149,7 @@ def visualize_batch(batch, visualize_dir):
     pcd.points = o3d.utility.Vector3dVector(points)
     pcd.colors = o3d.utility.Vector3dVector(colors / 255.0)  # Open3D 颜色需要在 [0, 1] 范围内
 
-    ply_name = "colored_points/" + str(frame_id[0]) + "_vector_label.ply"
+    ply_name = "./output/PoznanRD_2_npoint4096_posradius_005/colored_points/" + str(frame_id[0]) + "_vector_label.ply"
     # 保存为 PLY 文件
     o3d.io.write_point_cloud(ply_name, pcd)
 
@@ -181,6 +184,8 @@ def visualize_batch(batch, visualize_dir):
     dist_matrix = vec_a.reshape(-1, 1) + vec_b.reshape(1, -1) - 2 * np.matmul(p_pts, np.transpose(l_pts))
     dist_matrix = np.sqrt(dist_matrix + 1e-6)
     p_ind, l_ind = linear_sum_assignment(dist_matrix)
+    print("l_ind: ", l_ind)
+    print("l_ind.shape: ", l_ind.shape)
     match_edge = list(itertools.combinations(l_ind, 2))
     match_edge = np.array([tuple(sorted(e)) for e in match_edge])
     score = edge_pred[idx:idx+len(match_edge)]

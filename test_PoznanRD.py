@@ -28,7 +28,7 @@ def parse_config():
 
 def main():
     args, cfg = parse_config()
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    # os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     extra_tag = args.test_tag
     output_dir = cfg.ROOT_DIR / 'output' / extra_tag
