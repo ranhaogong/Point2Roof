@@ -59,6 +59,7 @@ def main():
     last_epoch = -1
     ckpt_list = glob.glob(str(ckpt_dir / '*checkpoint_epoch_*.pth'))
     if len(ckpt_list) > 0:
+        print("ckpt_list[-1]: ", ckpt_list[-1])
         ckpt_list.sort(key=os.path.getmtime)
         it, start_epoch = model_utils.load_params_with_optimizer(
             net, ckpt_list[-1], optimizer=optimizer, logger=logger

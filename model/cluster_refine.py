@@ -95,7 +95,8 @@ class ClusterRefineNet(nn.Module):
                 new_pts = torch.cat(pts_list, 0)
                 new_xyz_batch_cnt = new_pts.new_tensor(new_xyz_batch_cnt, dtype=torch.int32)
         if new_pts is None:
-            exit()
+            # exit()
+            print("new_pts is None")
         batch_idx = torch.zeros(new_pts.shape[0], device=new_pts.device)
         idx = 0
         for i, cnt in enumerate(new_xyz_batch_cnt):

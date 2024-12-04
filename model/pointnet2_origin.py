@@ -129,124 +129,20 @@ class PointNet2(nn.Module):
         reg_loss = reg_loss_src.sum() / batch_size
         reg_loss = reg_loss * weight
         return reg_loss
-    
-    def assign_targets(self, points, gvs, r):
-        # 计算每个拐点的动态半径
-        radius_per_point = self.compute_dynamic_radius(gvs)
-        
-        # 使用每个拐点的半径进行查询
-        idx, dis = self.ball_center_query(radius_per_point, points, gvs)
-        
-        # 对应的标签：如果点云到拐点的距离小于该拐点的半径，则设置为1，否则为0
-        label = torch.where(dis <= radius_per_point[idx], torch.ones_like(dis), torch.zeros_like(dis))
-        
+
+    def assign_targets(self, points, gvs, radius):
+        idx = ball_center_query(radius, points, gvs).type(torch.int64)
+        batch_size = gvs.size()[0]
+        idx_add = torch.arange(batch_size).to(idx.device).unsqueeze(-1).repeat(1, idx.shape[-1]) * gvs.shape[1]
+        gvs = gvs.view(-1, 3)
+        idx_add += idx
+        target_points = gvs[idx_add.view(-1)].view(batch_size, -1, 3)
+        dis = target_points - points
+        dis[idx < 0] = 0
+        dis /= radius
+        label = torch.where(idx >= 0, torch.ones(idx.shape).to(idx.device),
+                            torch.zeros(idx.shape).to(idx.device))
         return dis, label
-    
-    def compute_dynamic_radius(self, gvs):
-        """
-        计算每个拐点到其他拐点的最短距离，并将其作为该拐点的半径，排除自身。
-        gvs: 形状为 [B, M, 3]，表示 B 个批次，每个批次有 M 个拐点，每个拐点是一个 3D 坐标。
-        
-        返回:
-        radius_per_point: 形状为 [B, M]，每个拐点的最短距离作为半径。
-        """
-        batch_size, num_gvs, _ = gvs.size()
-        
-        # 计算每个拐点之间的距离 (L2范数)，得到一个 [B, M, M] 的距离矩阵
-        dis_matrix = torch.norm(gvs.unsqueeze(2) - gvs.unsqueeze(1), dim=-1, p=2)  # B M M
-        
-        # 生成一个掩码，排除每个拐点与自身的距离
-        mask = torch.eye(num_gvs, device=gvs.device).bool()  # 对角线为True，其余为False
-        dis_matrix.masked_fill_(mask.unsqueeze(0), float('inf'))  # 设置对角线为inf
-        
-        # 对每个拐点，找出距离最近的其他拐点的最小距离
-        radius_per_point, _ = dis_matrix.min(dim=-1)  # B M，获取每个拐点到其他拐点的最短距离
-        # radius_per_point的形状应该是 [B, M]
-        
-        return radius_per_point
-    
-    def ball_center_query(self, radius_per_point, points, gvs):
-        """
-        根据每个拐点的动态半径，返回距离每个点云最近的拐点的索引和距离。
-        """
-        batch_size, num_points, _ = points.size()
-        num_gvs = gvs.size(1)
-        
-        # 计算每个点云与所有拐点的距离 (L2范数)
-        dis_matrix = torch.norm(points.unsqueeze(2) - gvs.unsqueeze(1), dim=-1, p=2)  # B N M
-        
-        # 找到每个点云距离最近的拐点的索引和距离
-        idx = dis_matrix.argmin(dim=-1)  # B N，找到距离最近的拐点索引
-        dis = dis_matrix.gather(-1, idx.unsqueeze(-1))  # B N 1，获取距离最近拐点的距离
-
-        return idx, dis.squeeze(-1)  # 返回索引和距离
-    # def _ball_center_query(self, radius, points, gvs):
-    #     """
-    #     对于每个点，从gvs中找到在给定半径范围内的点。
-
-    #     参数：
-    #     radius (Tensor): 形状为 (B, N)，每个点对应的半径。
-    #     points (Tensor): 形状为 (B, N, 3)，表示每个点的坐标。
-    #     gvs (Tensor): 形状为 (B, M, 3)，表示目标点集的坐标。
-
-    #     返回：
-    #     idx (Tensor): 形状为 (B, N)，每个点的目标点索引。
-    #     """
-    #     batch_size, num_points, _ = points.size()
-    #     _, num_gvs, _ = gvs.size()
-
-    #     # 计算每个点与gvs中所有点的欧几里得距离 (B, N, M)
-    #     dist_matrix = torch.cdist(points, gvs)  # 输出的形状为 (B, N, M)
-
-    #     # 每个点的半径广播成 (B, N, M)
-    #     radius_broadcast = radius.unsqueeze(-1).expand(-1, -1, num_gvs)  # 形状为 (B, N, M)
-
-    #     # 通过比较距离与半径来判断哪些点在半径范围内
-    #     # idx 是一个 (B, N, M) 的布尔矩阵，表示每个点的邻域
-    #     idx = dist_matrix <= radius_broadcast  # (B, N, M) 布尔矩阵，表示每个点的邻域
-    #     idx = idx.int()  # 转换为 0 或 1 的整型值
-
-    #     # 对每个点，找到其在半径范围内的第一个目标点的索引
-    #     # 如果没有找到目标点，设置为 -1
-    #     idx_result = idx.max(dim=-1)[1]  # 每一行（每个点）的最大值索引，表示最近的目标点
-        
-    #     # 确保 idx_result 和 torch.full_like 的形状匹配
-    #     idx_result = torch.where(idx_result.sum(dim=-1, keepdim=True) == 0, 
-    #                             torch.full_like(idx_result, -1), idx_result)  # 如果没有找到目标点，设为 -1
-
-    #     return idx_result
-
-
-    # def assign_targets(self, points, gvs, r):
-    #     # 计算每个点到其他点的欧几里得距离
-    #     dist_matrix = torch.cdist(points, points)  # 计算 points 中每个点之间的距离 (B, N, N)
-        
-    #     # 对于每个点，选取最小距离作为其半径，忽略自己到自己的距离
-    #     min_dist, _ = dist_matrix.topk(2, dim=-1, largest=False, sorted=False)  # 取前2小的距离，最小的是自己到自己的距离
-    #     radius_per_point = min_dist[:, :, 1]  # 每个点的半径是第二小的距离（去掉自己到自己的距离）
-
-    #     # 查询每个点的最近邻
-    #     idx = self._ball_center_query(radius_per_point, points, gvs).type(torch.int64)  # 使用每个点的半径进行查询
-    #     batch_size = gvs.size()[0]
-        
-    #     # 计算 idx_add，保证每个批次样本的正确索引
-    #     idx_add = torch.arange(batch_size).to(idx.device).unsqueeze(-1).repeat(1, idx.shape[-1]) * gvs.shape[1]
-    #     gvs = gvs.view(-1, 3)  # 重塑 gvs 为 (B*M, 3)
-    #     idx_add += idx
-        
-    #     # 从 gvs 中获取目标点
-    #     target_points = gvs[idx_add.view(-1)].view(batch_size, -1, 3)  # B N C
-        
-    #     # 计算每个点到目标点的距离
-    #     dis = target_points - points
-    #     dis[idx < 0] = 0  # 如果没有找到目标点，设置距离为 0
-    #     dis /= radius_per_point.unsqueeze(-1)  # 每个点的距离归一化
-
-    #     # 生成标签：如果 idx >= 0，说明找到了有效的目标点，标签为 1；否则标签为 0
-    #     label = torch.where(idx >= 0, torch.ones(idx.shape).to(idx.device),
-    #                         torch.zeros(idx.shape).to(idx.device))  # B N
-
-    #     return dis, label
 
 
 class PointNetSAModuleMSG(nn.Module):
