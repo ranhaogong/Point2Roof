@@ -5,24 +5,136 @@ import torch.nn.functional as F
 from .pointnet_util import *
 from .model_utils import *
 from utils import loss_utils
+from torch.nn import Sequential, Linear, ReLU, LeakyReLU
+from torch_geometric.nn import PointNetConv, XConv, DynamicEdgeConv
+from torch_geometric.nn import fps, global_mean_pool, global_max_pool, knn_graph
+from torch_geometric.nn import MLP, PointTransformerConv, knn, radius
+from torch_geometric.utils import scatter
+from torch_geometric.nn.aggr import MaxAggregation
+from torch_geometric.nn.conv import MessagePassing
+from torch_geometric.nn.pool.decimation import decimation_indices
+from torch_geometric.utils import softmax
+
+class TransformerBlock(torch.nn.Module):
+    """
+    Transformer block for PointTransformer.
+    """
+
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.lin_in = Linear(in_channels, in_channels)
+        self.lin_out = Linear(out_channels, out_channels)
+
+        self.pos_nn = MLP([3, 64, out_channels], norm=None, plain_last=False)
+        self.attn_nn = MLP([out_channels, 64, out_channels], norm=None, plain_last=False)
+        self.transformer = PointTransformerConv(in_channels, out_channels, pos_nn=self.pos_nn, attn_nn=self.attn_nn)
+
+    def forward(self, x, pos, edge_index):
+        x = self.lin_in(x).relu()
+        x = self.transformer(x, pos, edge_index)
+        x = self.lin_out(x).relu()
+        return x
 
 
+class TransitionDown(torch.nn.Module):
+    """
+    TransitionDown for PointTransformer.
+    Samples the input point cloud by a ratio percentage to reduce
+    cardinality and uses an MLP to augment features dimensionality.
+    """
+
+    def __init__(self, in_channels, out_channels, ratio=0.25, k=16):
+        super().__init__()
+        self.k = k
+        self.ratio = ratio
+        self.mlp = MLP([in_channels, out_channels], plain_last=False)
+
+    def forward(self, x, pos, batch):
+        # FPS sampling
+        id_clusters = fps(pos, ratio=self.ratio, batch=batch)
+
+        # compute k-nearest points for each cluster
+        sub_batch = batch[id_clusters] if batch is not None else None
+
+        # beware of self loop
+        id_k_neighbor = knn(pos, pos[id_clusters], k=self.k, batch_x=batch, batch_y=sub_batch)
+
+        # transformation of features through a simple MLP
+        x = self.mlp(x)
+
+        # Max pool onto each cluster the features from knn in points
+        x_out = scatter(x[id_k_neighbor[1]], id_k_neighbor[0], dim=0, dim_size=id_clusters.size(0), reduce='max')
+
+        # keep only the clusters and their max-pooled features
+        sub_pos, out = pos[id_clusters], x_out
+        return out, sub_pos, sub_batch
+
+
+class PointTransformer(torch.nn.Module):
+    """
+    PointTransformer.
+    """
+
+    def __init__(self, latent_dim, k=16):
+        super().__init__()
+        self.k = k
+
+        # dummy feature is created if there is none given
+        in_channels = 1
+
+        # hidden channels
+        dim_model = [64, 128, 256, 512, 1024]
+
+        # first block
+        self.mlp_input = MLP([in_channels, dim_model[0]], plain_last=False)
+        self.transformer_input = TransformerBlock(in_channels=dim_model[0], out_channels=dim_model[0])
+
+        # backbone layers
+        self.transformers_down = torch.nn.ModuleList()
+        self.transition_down = torch.nn.ModuleList()
+
+        for i in range(len(dim_model) - 1):
+            # Add Transition Down block followed by a Transformer block
+            self.transition_down.append(
+                TransitionDown(in_channels=dim_model[i], out_channels=dim_model[i + 1], k=self.k))
+            self.transformers_down.append(
+                TransformerBlock(in_channels=dim_model[i + 1], out_channels=dim_model[i + 1]))
+        self.lin = MLP([dim_model[-1], latent_dim], plain_last=False)
+
+    def forward(self, pos, batch=None, x=None):
+        # add dummy features in case there is none
+        if x is None:
+            x = torch.ones((pos.shape[0], 1), device=pos.get_device())
+
+        # first block
+        x = self.mlp_input(x)
+        edge_index = knn_graph(pos, k=self.k, batch=batch)
+        x = self.transformer_input(x, pos, edge_index)
+
+        # backbone
+        for i in range(len(self.transformers_down)):
+            x, pos, batch = self.transition_down[i](x, pos, batch=batch)
+
+            edge_index = knn_graph(pos, k=self.k, batch=batch)
+            x = self.transformers_down[i](x, pos, edge_index)
+
+        # GlobalAveragePooling
+        # x = global_mean_pool(x, batch)
+
+        # MLP blocks
+        out = self.lin(x)
+        return out
+    
 class PointNet2(nn.Module):
     def __init__(self, model_cfg, in_channel=3):
         super().__init__()
         self.model_cfg = model_cfg
-        self.sa1 = PointNetSAModule(256, 0.1, 16, in_channel, [32, 32, 64])
-        self.sa2 = PointNetSAModule(128, 0.2, 16, 64, [64, 64, 128])
-        self.sa3 = PointNetSAModule(64, 0.4, 16, 128, [128, 128, 256])
-        self.sa4 = PointNetSAModule(16, 0.8, 16, 256, [256, 256, 512])
-        self.fp4 = PointNetFPModule(768, [256, 256])
-        self.fp3 = PointNetFPModule(384, [256, 256])
-        self.fp2 = PointNetFPModule(320, [256, 128])
-        self.fp1 = PointNetFPModule(128, [128, 128, 128])
-        self.shared_fc = Conv1dBN(128, 128)
-        self.drop = nn.Dropout(0.5)
+        self.k = 16  # K值，用于KNN图
+        self.latent_dim = 32768  # 最终的特征维度
+        self.transformer = PointTransformer(latent_dim=self.latent_dim, k=self.k)
         self.offset_fc = nn.Conv1d(128, 3, 1)
         self.cls_fc = nn.Conv1d(128, 1, 1)
+        self.drop = nn.Dropout(0.5)
         self.init_weights()
         self.num_output_feature = 128
         if self.training:
@@ -57,21 +169,19 @@ class PointNet2(nn.Module):
                 'cls_label': cls
             })
 
-        fea = xyz
-        l0_fea = fea.permute(0, 2, 1)
-        l0_xyz = xyz
+        batch_size, num_points, _ = xyz.size() # 64, 1024
+        pos = xyz.view(-1, 3)  # 转换为 (B*N, 3)
+        batch = torch.arange(batch_size).repeat_interleave(num_points).to(pos.device)  # Batch索引
 
-        l1_xyz, l1_fea = self.sa1(l0_xyz, l0_fea)
-        l2_xyz, l2_fea = self.sa2(l1_xyz, l1_fea)
-        l3_xyz, l3_fea = self.sa3(l2_xyz, l2_fea)
-        l4_xyz, l4_fea = self.sa4(l3_xyz, l3_fea)
+        # 初始化特征（假设无额外输入特征）
+        features = None
 
-        l3_fea = self.fp4(l3_xyz, l4_xyz, l3_fea, l4_fea)
-        l2_fea = self.fp3(l2_xyz, l3_xyz, l2_fea, l3_fea)
-        l1_fea = self.fp2(l1_xyz, l2_xyz, l1_fea, l2_fea)
-        l0_fea = self.fp1(l0_xyz, l1_xyz, None, l1_fea)
+        # 使用 PointTransformer 提取特征
+        transformer_output = self.transformer(pos, batch=batch, x=features) # torch.Size([64, 128])
 
-        x = self.drop(self.shared_fc(l0_fea))
+        # 恢复到 (B, N, C) 格式
+        transformer_output = transformer_output.view(batch_size, num_points, -1).permute(0, 2, 1)
+        x = self.drop(transformer_output)
         pred_offset = self.offset_fc(x).permute(0, 2, 1)
         # BxNx1
         pred_cls = self.cls_fc(x).permute(0, 2, 1)
@@ -80,7 +190,7 @@ class PointNet2(nn.Module):
                 'cls_pred': pred_cls,
                 'offset_pred': pred_offset
             })
-        batch_dict['point_features'] = l0_fea.permute(0, 2, 1)
+        batch_dict['point_features'] = transformer_output.permute(0, 2, 1)
         batch_dict['point_pred_score'] = torch.sigmoid(pred_cls).squeeze(-1)
         batch_dict['point_pred_offset'] = pred_offset * self.model_cfg.PosRadius
         return batch_dict
@@ -129,124 +239,20 @@ class PointNet2(nn.Module):
         reg_loss = reg_loss_src.sum() / batch_size
         reg_loss = reg_loss * weight
         return reg_loss
-    
-    def assign_targets(self, points, gvs, r):
-        # 计算每个拐点的动态半径
-        radius_per_point = self.compute_dynamic_radius(gvs)
-        
-        # 使用每个拐点的半径进行查询
-        idx, dis = self.ball_center_query(radius_per_point, points, gvs)
-        
-        # 对应的标签：如果点云到拐点的距离小于该拐点的半径，则设置为1，否则为0
-        label = torch.where(dis <= radius_per_point[idx], torch.ones_like(dis), torch.zeros_like(dis))
-        
+
+    def assign_targets(self, points, gvs, radius):
+        idx = ball_center_query(radius, points, gvs).type(torch.int64)
+        batch_size = gvs.size()[0]
+        idx_add = torch.arange(batch_size).to(idx.device).unsqueeze(-1).repeat(1, idx.shape[-1]) * gvs.shape[1]
+        gvs = gvs.view(-1, 3)
+        idx_add += idx
+        target_points = gvs[idx_add.view(-1)].view(batch_size, -1, 3)
+        dis = target_points - points
+        dis[idx < 0] = 0
+        dis /= radius
+        label = torch.where(idx >= 0, torch.ones(idx.shape).to(idx.device),
+                            torch.zeros(idx.shape).to(idx.device))
         return dis, label
-    
-    def compute_dynamic_radius(self, gvs):
-        """
-        计算每个拐点到其他拐点的最短距离，并将其作为该拐点的半径，排除自身。
-        gvs: 形状为 [B, M, 3]，表示 B 个批次，每个批次有 M 个拐点，每个拐点是一个 3D 坐标。
-        
-        返回:
-        radius_per_point: 形状为 [B, M]，每个拐点的最短距离作为半径。
-        """
-        batch_size, num_gvs, _ = gvs.size()
-        
-        # 计算每个拐点之间的距离 (L2范数)，得到一个 [B, M, M] 的距离矩阵
-        dis_matrix = torch.norm(gvs.unsqueeze(2) - gvs.unsqueeze(1), dim=-1, p=2)  # B M M
-        
-        # 生成一个掩码，排除每个拐点与自身的距离
-        mask = torch.eye(num_gvs, device=gvs.device).bool()  # 对角线为True，其余为False
-        dis_matrix.masked_fill_(mask.unsqueeze(0), float('inf'))  # 设置对角线为inf
-        
-        # 对每个拐点，找出距离最近的其他拐点的最小距离
-        radius_per_point, _ = dis_matrix.min(dim=-1)  # B M，获取每个拐点到其他拐点的最短距离
-        # radius_per_point的形状应该是 [B, M]
-        
-        return radius_per_point
-    
-    def ball_center_query(self, radius_per_point, points, gvs):
-        """
-        根据每个拐点的动态半径，返回距离每个点云最近的拐点的索引和距离。
-        """
-        batch_size, num_points, _ = points.size()
-        num_gvs = gvs.size(1)
-        
-        # 计算每个点云与所有拐点的距离 (L2范数)
-        dis_matrix = torch.norm(points.unsqueeze(2) - gvs.unsqueeze(1), dim=-1, p=2)  # B N M
-        
-        # 找到每个点云距离最近的拐点的索引和距离
-        idx = dis_matrix.argmin(dim=-1)  # B N，找到距离最近的拐点索引
-        dis = dis_matrix.gather(-1, idx.unsqueeze(-1))  # B N 1，获取距离最近拐点的距离
-
-        return idx, dis.squeeze(-1)  # 返回索引和距离
-    # def _ball_center_query(self, radius, points, gvs):
-    #     """
-    #     对于每个点，从gvs中找到在给定半径范围内的点。
-
-    #     参数：
-    #     radius (Tensor): 形状为 (B, N)，每个点对应的半径。
-    #     points (Tensor): 形状为 (B, N, 3)，表示每个点的坐标。
-    #     gvs (Tensor): 形状为 (B, M, 3)，表示目标点集的坐标。
-
-    #     返回：
-    #     idx (Tensor): 形状为 (B, N)，每个点的目标点索引。
-    #     """
-    #     batch_size, num_points, _ = points.size()
-    #     _, num_gvs, _ = gvs.size()
-
-    #     # 计算每个点与gvs中所有点的欧几里得距离 (B, N, M)
-    #     dist_matrix = torch.cdist(points, gvs)  # 输出的形状为 (B, N, M)
-
-    #     # 每个点的半径广播成 (B, N, M)
-    #     radius_broadcast = radius.unsqueeze(-1).expand(-1, -1, num_gvs)  # 形状为 (B, N, M)
-
-    #     # 通过比较距离与半径来判断哪些点在半径范围内
-    #     # idx 是一个 (B, N, M) 的布尔矩阵，表示每个点的邻域
-    #     idx = dist_matrix <= radius_broadcast  # (B, N, M) 布尔矩阵，表示每个点的邻域
-    #     idx = idx.int()  # 转换为 0 或 1 的整型值
-
-    #     # 对每个点，找到其在半径范围内的第一个目标点的索引
-    #     # 如果没有找到目标点，设置为 -1
-    #     idx_result = idx.max(dim=-1)[1]  # 每一行（每个点）的最大值索引，表示最近的目标点
-        
-    #     # 确保 idx_result 和 torch.full_like 的形状匹配
-    #     idx_result = torch.where(idx_result.sum(dim=-1, keepdim=True) == 0, 
-    #                             torch.full_like(idx_result, -1), idx_result)  # 如果没有找到目标点，设为 -1
-
-    #     return idx_result
-
-
-    # def assign_targets(self, points, gvs, r):
-    #     # 计算每个点到其他点的欧几里得距离
-    #     dist_matrix = torch.cdist(points, points)  # 计算 points 中每个点之间的距离 (B, N, N)
-        
-    #     # 对于每个点，选取最小距离作为其半径，忽略自己到自己的距离
-    #     min_dist, _ = dist_matrix.topk(2, dim=-1, largest=False, sorted=False)  # 取前2小的距离，最小的是自己到自己的距离
-    #     radius_per_point = min_dist[:, :, 1]  # 每个点的半径是第二小的距离（去掉自己到自己的距离）
-
-    #     # 查询每个点的最近邻
-    #     idx = self._ball_center_query(radius_per_point, points, gvs).type(torch.int64)  # 使用每个点的半径进行查询
-    #     batch_size = gvs.size()[0]
-        
-    #     # 计算 idx_add，保证每个批次样本的正确索引
-    #     idx_add = torch.arange(batch_size).to(idx.device).unsqueeze(-1).repeat(1, idx.shape[-1]) * gvs.shape[1]
-    #     gvs = gvs.view(-1, 3)  # 重塑 gvs 为 (B*M, 3)
-    #     idx_add += idx
-        
-    #     # 从 gvs 中获取目标点
-    #     target_points = gvs[idx_add.view(-1)].view(batch_size, -1, 3)  # B N C
-        
-    #     # 计算每个点到目标点的距离
-    #     dis = target_points - points
-    #     dis[idx < 0] = 0  # 如果没有找到目标点，设置距离为 0
-    #     dis /= radius_per_point.unsqueeze(-1)  # 每个点的距离归一化
-
-    #     # 生成标签：如果 idx >= 0，说明找到了有效的目标点，标签为 1；否则标签为 0
-    #     label = torch.where(idx >= 0, torch.ones(idx.shape).to(idx.device),
-    #                         torch.zeros(idx.shape).to(idx.device))  # B N
-
-    #     return dis, label
 
 
 class PointNetSAModuleMSG(nn.Module):
