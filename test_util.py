@@ -55,12 +55,20 @@ def test_model(model, data_loader, logger):
                 batch = model(batch)
                 load_data_to_cpu(batch)
             eval_process(batch, statistics)
+        # Compute and log precision, recall, and F1-score for points and edges
         bias = statistics['pts_bias'] / statistics['tp_pts']
-        logger.info('pts_recall: %f' % (statistics['tp_pts'] / statistics['num_label_pts']))
-        logger.info('pts_precision: %f' % (statistics['tp_pts'] / statistics['num_pred_pts']))
-        logger.info('pts_bias: %f, %f, %f' % (bias[0], bias[1], bias[2]))
-        logger.info('edge_recall: %f' % (statistics['tp_edges'] / statistics['num_label_edges']))
-        logger.info('edge_precision: %f' % (statistics['tp_edges'] / statistics['num_pred_edges']))
+        pts_precision = statistics['tp_pts'] / statistics['num_pred_pts'] if statistics['num_pred_pts'] > 0 else 0
+        pts_recall = statistics['tp_pts'] / statistics['num_label_pts'] if statistics['num_label_pts'] > 0 else 0
+        edge_precision = statistics['tp_edges'] / statistics['num_pred_edges'] if statistics['num_pred_edges'] > 0 else 0
+        edge_recall = statistics['tp_edges'] / statistics['num_label_edges'] if statistics['num_label_edges'] > 0 else 0
+
+        # Calculate F1-scores for points and edges
+        pts_f1 = 2 * (pts_precision * pts_recall) / (pts_precision + pts_recall) if (pts_precision + pts_recall) > 0 else 0
+        edge_f1 = 2 * (edge_precision * edge_recall) / (edge_precision + edge_recall) if (edge_precision + edge_recall) > 0 else 0
+
+        logger.info(f'pts_precision: {pts_precision:.4f}, pts_recall: {pts_recall:.4f}, pts_f1: {pts_f1:.4f}')
+        logger.info(f'edge_precision: {edge_precision:.4f}, edge_recall: {edge_recall:.4f}, edge_f1: {edge_f1:.4f}')
+        logger.info(f'pts_bias: {bias[0]}, {bias[1]}, {bias[2]}')
 
 def eval_process(batch, statistics):
     batch_size = batch['batch_size']

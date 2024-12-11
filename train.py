@@ -36,7 +36,8 @@ def parse_config():
 def main():
     args, cfg = parse_config()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
+    print(f"Current GPU: {torch.cuda.current_device()}")
+    print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
     extra_tag = args.extra_tag if args.extra_tag is not None \
             else 'model-%s' % datetime.datetime.now().strftime('%Y%m%d')
     output_dir = cfg.ROOT_DIR / 'output' / extra_tag

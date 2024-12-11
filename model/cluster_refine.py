@@ -72,6 +72,9 @@ class ClusterRefineNet(nn.Module):
         pts_cluster[pts_score > score_thresh] = offset_pts[pts_score > score_thresh]
         cluster_idx = dbscan_cluster(self.model_cfg.Cluster.eps, self.model_cfg.Cluster.min_pts, pts_cluster)
         key_pts, num_cluster = get_cluster_pts(pts_cluster, cluster_idx)
+        # if len(key_pts) == 0:
+        #     batch_dict['warning'] = True
+        #     return batch_dict
         if self.training:
              new_pts, targets, labels, matches, new_xyz_batch_cnt = self.matcher(key_pts, batch_dict['vectors'])
              offset_targets = (targets - new_pts) / self.model_cfg.MatchRadius if new_pts is not None else None
@@ -97,6 +100,7 @@ class ClusterRefineNet(nn.Module):
         if new_pts is None:
             # exit()
             print("new_pts is None")
+            # return batch_dict
         batch_idx = torch.zeros(new_pts.shape[0], device=new_pts.device)
         idx = 0
         for i, cnt in enumerate(new_xyz_batch_cnt):
@@ -128,6 +132,7 @@ class ClusterRefineNet(nn.Module):
         batch_dict['keypoint_features'] = refine_fea
         # batch_dict['keypoint_pred_score'] = torch.sigmoid(pred_cls).squeeze(-1)
         batch_dict['refined_keypoint'] = pred_offset * self.model_cfg.MatchRadius + new_pts
+        batch_dict['warning'] = False
         return batch_dict
 
     def loss(self, loss_dict, disp_dict):

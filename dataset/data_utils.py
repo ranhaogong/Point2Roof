@@ -2,12 +2,14 @@ from torch.utils.data import DataLoader
 #from .roofn3d_dataset import RoofN3dDataset
 from dataset.roofn3d_dataset import RoofN3dDataset
 from dataset.PoznanRD_dataset import PoznanRDDataset
+from dataset.building3d_dataset import Building3DDataset
 import numpy as np
 import random
 
 __all__ = {
     'RoofN3dDataset': RoofN3dDataset,
-    'PoznanRDDataset': PoznanRDDataset
+    'PoznanRDDataset': PoznanRDDataset,
+    'Building3DDataset': Building3DDataset
 }
 
 class GaussianTransform:
@@ -50,6 +52,21 @@ def build_dataloader_PoznanRDDataset(path, batch_size, data_cfg, workers=16, log
         trasform = GaussianTransform(sigma= (0.005, 0.010), clip = 10, p = 0.0)
 
     dataset = PoznanRDDataset(path, training, trasform, data_cfg, logger)
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, pin_memory=True, num_workers=workers, collate_fn=dataset.collate_batch,
+        shuffle=training)
+    return dataloader
+
+def build_dataloader_Building3DDataset(path, batch_size, data_cfg, workers=16, logger=None, training=True):
+    # path: /data/haoran/dataset/building3d/roof/Entry-level
+    path += '/train' if training else '/test'
+
+    if training:
+        trasform = GaussianTransform(sigma=(0.005, 0.010), clip = 10, p = 0.8)
+    else:
+        trasform = GaussianTransform(sigma= (0.005, 0.010), clip = 10, p = 0.0)
+
+    dataset = Building3DDataset(path, trasform, data_cfg, logger)
     dataloader = DataLoader(
         dataset, batch_size=batch_size, pin_memory=True, num_workers=workers, collate_fn=dataset.collate_batch,
         shuffle=training)

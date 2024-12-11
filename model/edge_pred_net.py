@@ -161,14 +161,3 @@ class PairedPointAttention(nn.Module):
         fea = torch.cat([att_fea1.unsqueeze(1), att_fea2.unsqueeze(1)], 1)
         fea = self.fea_fusion_layer(fea.permute(0, 2, 1)).squeeze(-1)
         return fea
-
-
-
-
-
-
-
-
-
-
-

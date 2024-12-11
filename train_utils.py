@@ -29,6 +29,7 @@ def train_one_epoch(model, optim, data_loader, accumulated_iter,
         optim.zero_grad()
         load_data_to_gpu(batch)
         loss, loss_dict, disp_dict = model(batch)
+        # loss.backward()
         loss.backward()
         optim.step()
 
@@ -56,6 +57,7 @@ def train_model(model, optim, data_loader, lr_sch, start_it, start_epoch, total_
             if sampler is not None:
                 sampler.set_epoch(e)
             if e > 5:
+            # if e > 10:
                 model.use_edge = True
             accumulated_iter = train_one_epoch(model, optim, data_loader, accumulated_iter, tbar,
                                                leave_pbar=(e + 1 == total_epochs))
