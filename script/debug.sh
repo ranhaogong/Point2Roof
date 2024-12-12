@@ -8,7 +8,7 @@
 # --lr 1e-3 
 
 CUDA_VISIBLE_DEVICES=2 \
-python -m debugpy --listen 5679 --wait-for-client ../train.py \
+python -m debugpy --listen 5681 --wait-for-client ../train.py \
 --data_path /data/haoran/dataset/RoofReconstructionDataset/RealDataset \
 --cfg_file ../cfg/model_cfg.yaml \
 --batch_size 64 \

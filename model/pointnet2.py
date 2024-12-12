@@ -51,7 +51,7 @@ class PointNet2(nn.Module):
                 'cls_label': cls
             })
 
-        fea = self.pct(xyz)
+        fea = self.pct(xyz.permute(0, 2, 1))
         pred_offset = self.offset_fc(fea).permute(0, 2, 1)
         # BxNx1
         pred_cls = self.cls_fc(fea).permute(0, 2, 1)
@@ -319,14 +319,15 @@ class Pct(nn.Module):
 
         self.linear1 = nn.Linear(1024, 512, bias=False)
         self.bn6 = nn.BatchNorm1d(512)
-        self.dp1 = nn.Dropout(p=args.dropout)
+        self.dp1 = nn.Dropout(p=args['dropout'])
         self.linear2 = nn.Linear(512, 256)
         self.bn7 = nn.BatchNorm1d(256)
-        self.dp2 = nn.Dropout(p=args.dropout)
+        self.dp2 = nn.Dropout(p=args['dropout'])
         self.linear3 = nn.Linear(256, output_channels)
 
     def forward(self, x):
         xyz = x.permute(0, 2, 1)
+        # xyz = x
         batch_size, _, _ = x.size()
         # B, D, N
         x = F.relu(self.bn1(self.conv1(x)))
