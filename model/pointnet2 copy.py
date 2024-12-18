@@ -5,24 +5,18 @@ import torch.nn.functional as F
 from .pointnet_util import *
 from .model_utils import *
 from utils import loss_utils
-
+from .util import sample_and_group 
 
 class PointNet2(nn.Module):
     def __init__(self, model_cfg, in_channel=3):
         super().__init__()
         self.model_cfg = model_cfg
-        self.sa1 = PointNetSAModule(256, 0.1, 16, in_channel, [32, 32, 64])
-        self.sa2 = PointNetSAModule(128, 0.2, 16, 64, [64, 64, 128])
-        self.sa3 = PointNetSAModule(64, 0.4, 16, 128, [128, 128, 256])
-        self.sa4 = PointNetSAModule(16, 0.8, 16, 256, [256, 256, 512])
-        self.fp4 = PointNetFPModule(768, [256, 256])
-        self.fp3 = PointNetFPModule(384, [256, 256])
-        self.fp2 = PointNetFPModule(320, [256, 128])
-        self.fp1 = PointNetFPModule(128, [128, 128, 128])
-        self.shared_fc = Conv1dBN(128, 128)
-        self.drop = nn.Dropout(0.5)
-        self.offset_fc = nn.Conv1d(128, 3, 1)
-        self.cls_fc = nn.Conv1d(128, 1, 1)
+        self.args = {
+            'dropout': 0.5
+        }
+        self.pct = Pct(self.args, 256)
+        self.offset_fc = nn.Conv1d(256, 3, 1)
+        self.cls_fc = nn.Conv1d(256, 1, 1)
         self.init_weights()
         self.num_output_feature = 128
         if self.training:
@@ -57,30 +51,16 @@ class PointNet2(nn.Module):
                 'cls_label': cls
             })
 
-        fea = xyz
-        l0_fea = fea.permute(0, 2, 1)
-        l0_xyz = xyz
-
-        l1_xyz, l1_fea = self.sa1(l0_xyz, l0_fea)
-        l2_xyz, l2_fea = self.sa2(l1_xyz, l1_fea)
-        l3_xyz, l3_fea = self.sa3(l2_xyz, l2_fea)
-        l4_xyz, l4_fea = self.sa4(l3_xyz, l3_fea)
-
-        l3_fea = self.fp4(l3_xyz, l4_xyz, l3_fea, l4_fea)
-        l2_fea = self.fp3(l2_xyz, l3_xyz, l2_fea, l3_fea)
-        l1_fea = self.fp2(l1_xyz, l2_xyz, l1_fea, l2_fea)
-        l0_fea = self.fp1(l0_xyz, l1_xyz, None, l1_fea)
-
-        x = self.drop(self.shared_fc(l0_fea))
-        pred_offset = self.offset_fc(x).permute(0, 2, 1)
+        fea = self.pct(xyz.permute(0, 2, 1)) # torch.Size([64, 1024, 512])
+        pred_offset = self.offset_fc(fea.permute(0, 2, 1)).permute(0, 2, 1)
         # BxNx1
-        pred_cls = self.cls_fc(x).permute(0, 2, 1)
+        pred_cls = self.cls_fc(fea.permute(0, 2, 1)).permute(0, 2, 1)
         if self.training:
             self.train_dict.update({
                 'cls_pred': pred_cls,
                 'offset_pred': pred_offset
             })
-        batch_dict['point_features'] = l0_fea.permute(0, 2, 1)
+        batch_dict['point_features'] = fea
         batch_dict['point_pred_score'] = torch.sigmoid(pred_cls).squeeze(-1)
         batch_dict['point_pred_offset'] = pred_offset * self.model_cfg.PosRadius
         return batch_dict
@@ -299,3 +279,168 @@ class GroupAll(nn.Module):
             new_features = grouped_xyz
 
         return new_features
+    
+
+class Local_op(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(Local_op, self).__init__()
+        self.conv1 = nn.Conv1d(in_channels, out_channels, kernel_size=1, bias=False)
+        self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm1d(out_channels)
+        self.bn2 = nn.BatchNorm1d(out_channels)
+
+    def forward(self, x):
+        b, n, s, d = x.size()  # torch.Size([32, 512, 32, 6]) 
+        x = x.permute(0, 1, 3, 2)   
+        x = x.reshape(-1, d, s) 
+        batch_size, _, N = x.size()
+        x = F.relu(self.bn1(self.conv1(x))) # B, D, N
+        x = F.relu(self.bn2(self.conv2(x))) # B, D, N
+        x = F.adaptive_max_pool1d(x, 1).view(batch_size, -1)
+        x = x.reshape(b, n, -1).permute(0, 2, 1)
+        return x
+
+class Pct(nn.Module):
+    def __init__(self, args, output_channels=40):
+        super(Pct, self).__init__()
+        self.args = args
+        self.conv1 = nn.Conv1d(3, 64, kernel_size=1, bias=False)
+        self.conv2 = nn.Conv1d(64, 64, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm1d(64)
+        self.bn2 = nn.BatchNorm1d(64)
+        self.gather_local_0 = Local_op(in_channels=128, out_channels=128)
+        self.gather_local_1 = Local_op(in_channels=256, out_channels=256)
+
+        self.pt_last = Point_Transformer_Last(args)
+
+        self.conv_fuse = nn.Sequential(nn.Conv1d(1280, 1024, kernel_size=1, bias=False),
+                                    nn.BatchNorm1d(1024),
+                                    nn.LeakyReLU(negative_slope=0.2))
+
+        self.linear1 = nn.Linear(1024, 512, bias=False)
+        self.bn6 = nn.BatchNorm1d(512)
+        self.dp1 = nn.Dropout(p=args['dropout'])
+        self.linear2 = nn.Linear(512, 256)
+        self.bn7 = nn.BatchNorm1d(256)
+        self.dp2 = nn.Dropout(p=args['dropout'])
+        self.linear3 = nn.Linear(256, output_channels)
+        self.LBRD = nn.Sequential(
+            nn.Conv1d(in_channels=512, out_channels=256, kernel_size=1),  # Conv1d 替代 Linear
+            nn.BatchNorm1d(256),             # BatchNorm按点对齐
+            nn.LeakyReLU(negative_slope=0.2),                          # 激活函数
+            nn.Dropout(p=args['dropout'])        # Dropout层
+        )
+        self.LBR = nn.Sequential(
+            nn.Conv1d(in_channels=256, out_channels=256, kernel_size=1),  # Conv1d 替代 Linear
+            nn.BatchNorm1d(256),             # BatchNorm按点对齐
+            nn.LeakyReLU(negative_slope=0.2)                          # 激活函数
+        )
+
+    def forward(self, x):
+        xyz = x.permute(0, 2, 1)
+        # xyz = x
+        batch_size, _, _ = x.size()
+        # B, D, N
+        x = F.relu(self.bn1(self.conv1(x)))
+        # B, D, N
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = x.permute(0, 2, 1)
+        new_xyz, new_feature = sample_and_group(npoint=512, radius=0.15, nsample=32, xyz=xyz, points=x)         
+        feature_0 = self.gather_local_0(new_feature)
+        feature = feature_0.permute(0, 2, 1)
+        new_xyz, new_feature = sample_and_group(npoint=256, radius=0.2, nsample=32, xyz=new_xyz, points=feature) 
+        feature_1 = self.gather_local_1(new_feature)
+
+        x = self.pt_last(feature_1, new_xyz)
+        x = torch.cat([x, feature_1], dim=1) # torch.Size([64, 1280, 256])
+        x = self.conv_fuse(x) # torch.Size([64, 1024, 256])
+        x_pointwise = x
+        x = F.adaptive_max_pool1d(x, 1).view(batch_size, -1) # torch.Size([64, 1024])
+        x = F.leaky_relu(self.bn6(self.linear1(x)), negative_slope=0.2) # torch.Size([64, 512])
+        x = self.dp1(x) # torch.Size([64, 512])
+        x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2) # torch.Size([64, 256])
+        x = self.dp2(x)
+        x = self.linear3(x) # torch.Size([64, 256])
+        # 将全局特征扩展到逐点维度
+        x_expanded = x.unsqueeze(1).repeat(1, x_pointwise.size()[1], 1)  # [64, 1024, 256]
+
+        # 拼接逐点特征和全局特征
+        x = torch.cat([x_pointwise, x_expanded], dim=-1)  # [64, 1024, 512]
+        x = x.permute(0, 2, 1) # torch.Size([64, 256, 1024])
+        # x = self.LBRD[0](x) # torch.Size([64, 1024, 256])
+        # x = self.LBRD[1](x) # torch.Size([64, 256, 1024])
+        # x = self.LBRD[2:](x) # torch.Size([64, 1024, 256])
+        x = self.LBRD(x)
+        # x = x.permute(0, 2, 1) # torch.Size([64, 1024, 256])
+        # x = self.LBR[0](x) # torch.Size([64, 1024, 256])
+        # x = x.permute(0, 2, 1) # torch.Size([64, 256, 1024])
+        # x = self.LBR[1](x) # torch.Size([64, 256, 1024])
+        # x = self.LBR[2:](x) # torch.Size([64, 1024, 256])
+        x = self.LBR(x)
+        x = x.permute(0, 2, 1) # torch.Size([64, 1024, 256])
+        return x
+
+class Point_Transformer_Last(nn.Module):
+    def __init__(self, args, channels=256):
+        super(Point_Transformer_Last, self).__init__()
+        self.args = args
+        self.conv1 = nn.Conv1d(channels, channels, kernel_size=1, bias=False)
+        self.pos_xyz = nn.Conv1d(3, channels, 1)
+        self.bn1 = nn.BatchNorm1d(channels)
+
+        self.sa1 = SA_Layer(channels)
+        self.sa2 = SA_Layer(channels)
+        self.sa3 = SA_Layer(channels)
+        self.sa4 = SA_Layer(channels)
+
+    def forward(self, x, xyz):
+        # 
+        # b, 3, npoint, nsample  
+        # conv2d 3 -> 128 channels 1, 1
+        # b * npoint, c, nsample 
+        # permute reshape
+        batch_size, _, N = x.size()
+        xyz = xyz.permute(0, 2, 1)
+        xyz = self.pos_xyz(xyz)
+        # B, D, N
+        x = F.relu(self.bn1(self.conv1(x)))
+        x1 = self.sa1(x, xyz)
+        x2 = self.sa2(x1, xyz)
+        x3 = self.sa3(x2, xyz)
+        x4 = self.sa4(x3, xyz)
+        x = torch.cat((x1, x2, x3, x4), dim=1)
+
+        return x
+
+class SA_Layer(nn.Module):
+    def __init__(self, channels):
+        super(SA_Layer, self).__init__()
+
+        self.q_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
+        self.k_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
+        self.q_conv.weight = self.k_conv.weight
+        self.q_conv.bias = self.k_conv.bias
+
+        self.v_conv = nn.Conv1d(channels, channels, 1)
+        self.trans_conv = nn.Conv1d(channels, channels, 1)
+        self.after_norm = nn.BatchNorm1d(channels)
+        self.act = nn.ReLU()
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, x, xyz):
+        # b, n, c
+        x = x + xyz
+        x_q = self.q_conv(x).permute(0, 2, 1)
+        # b, c, n
+        x_k = self.k_conv(x)
+        x_v = self.v_conv(x)
+        # b, n, n
+        energy = torch.bmm(x_q, x_k)
+
+        attention = self.softmax(energy)
+        attention = attention / (1e-9 + attention.sum(dim=1, keepdim=True))
+        # b, c, n
+        x_r = torch.bmm(x_v, attention)
+        x_r = self.act(self.after_norm(self.trans_conv(x - x_r)))
+        x = x + x_r
+        return x

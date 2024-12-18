@@ -110,8 +110,10 @@ class EdgeAttentionNet(nn.Module):
         # 将三者特征进行拼接或累加
         edge_fea = edge_fea + global_fea + att_fea  # 这里可以根据需要使用拼接或累加
 
-        edge_fea = edge_fea.squeeze(0)
-        edge_pred = self.cls_fc(self.drop(self.shared_fc(edge_fea)))
+        fused_fea = self.multi_scale_fusion(edge_fea)  # 使用 MultiScaleFusion 进行融合
+        fused_fea = fused_fea.squeeze(0)
+
+        edge_pred = self.cls_fc(self.drop(self.shared_fc(fused_fea)))
         batch_dict['pair_points'] = torch.cat(pair_idx_list, 0)
         batch_dict['edge_score'] = torch.sigmoid(edge_pred).view(-1)
         
