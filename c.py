@@ -48,7 +48,52 @@
 # for i in range(torch.cuda.device_count()):
 #     print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
 
-import os
-data_path = '/data/haoran/dataset/building3d/roof/Entry-level/train'
-xyz_path = os.path.join(data_path, 'xyz')
-print(xyz_path)
+# import os
+# data_path = '/data/haoran/dataset/building3d/roof/Entry-level/train'
+# xyz_path = os.path.join(data_path, 'xyz')
+# print(xyz_path)
+
+import pickle
+import torch
+import numpy as np
+import open3d as o3d
+# 加载文件中的变量
+with open('xyz.pkl', 'rb') as f:
+    xyz = pickle.load(f)
+    # print(xyz[0])
+    
+with open('my_data.pkl', 'rb') as f:
+    label = pickle.load(f)
+    # print(label[0])
+xyz = xyz[0].cpu().numpy()
+label = label[0].cpu().numpy()
+point_cloud = o3d.geometry.PointCloud()
+# xyz = np.asarray(xyz, dtype=np.float64)
+# 设置点云的坐标
+# 计算每一列的最大值和最小值
+print(xyz)
+x_max, y_max, z_max = np.max(xyz, axis=0)
+x_min, y_min, z_min = np.min(xyz, axis=0)
+
+# 计算每个坐标轴上的差值
+x_diff = x_max - x_min
+y_diff = y_max - y_min
+z_diff = z_max - z_min
+
+# 输出最大差值
+print(f"X轴最大差值: {x_diff}")
+print(f"Y轴最大差值: {y_diff}")
+print(f"Z轴最大差值: {z_diff}")
+colors = np.ones_like(xyz) * 255  # 默认白色 (255, 255, 255)
+colors[label > 0] = [255, 0, 0]
+    
+# 创建 Open3D 点云对象
+pcd = o3d.geometry.PointCloud()
+pcd.points = o3d.utility.Vector3dVector(xyz)
+pcd.colors = o3d.utility.Vector3dVector(colors / 255.0)  # Open3D 颜色需要在 [0, 1] 范围内
+
+ply_name = "vector_label.ply"
+# 保存为 PLY 文件
+o3d.io.write_point_cloud(ply_name, pcd)
+
+print(f"点云已保存为{ply_name}")

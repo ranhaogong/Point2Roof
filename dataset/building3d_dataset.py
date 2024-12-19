@@ -7,8 +7,10 @@ import shutil
 def read_pts(pts_file):
     with open(pts_file, 'r') as f:
         lines = f.readlines()
-        pts = np.array([f.strip().split(' ') for f in lines], dtype=np.float64)
+        # 提取前三列数据
+        pts = np.array([line.strip().split(' ')[:3] for line in lines], dtype=np.float64)
     return pts
+
 
 
 def load_obj(obj_file):
@@ -19,11 +21,9 @@ def load_obj(obj_file):
         vals = f.strip().split(' ')
         if vals[0] == 'v':
             vs.append(vals[1:])
-        else:
-            obj_data = np.array(vals[1:], dtype=np.int).reshape(-1, 1) - 1
-            idx = np.arange(len(obj_data)) - 1
-            cur_edge = np.concatenate([obj_data, obj_data[idx]], -1)
-            [edges.add(tuple(sorted(e))) for e in cur_edge]
+        elif vals[0] == 'l':
+            e = [int(vals[1]) - 1, int(vals[2]) - 1]
+            edges.add(tuple(sorted(e)))
     vs = np.array(vs, dtype=np.float64)
     edges = np.array(list(edges))
     return vs, edges
@@ -43,9 +43,13 @@ def writePoints(points, clsRoad):
 
 class Building3DDataset(Dataset):
     def __init__(self, data_path, transform, data_cfg, logger=None):
-        # data_path: /data/haoran/dataset/building3d/roof/Entry-level/train /data/haoran/dataset/building3d/roof/Entry-level/test
-        xyz_path = os.path.join(data_path, 'xyz')
-        self.xyz_list = [os.path.join(data_path, f) for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, f))]
+        with open(data_path, 'r') as f:
+            self.file_list = f.readlines()
+        self.file_list = [f.strip() for f in self.file_list]
+        flist = []
+        for l in self.file_list:
+             flist.append(l)
+        self.file_list = flist
 
         self.npoint = data_cfg.NPOINT
 
@@ -83,8 +87,14 @@ class Building3DDataset(Dataset):
         min_pt[:] = minXYZ
         max_pt[:] = maxXYZ
 
-        points = (points - min_pt) / (max_pt - min_pt)
-        vectors = (vectors - min_pt) / (max_pt - min_pt)
+        # points = (points - min_pt) / (max_pt - min_pt)
+        # vectors = (vectors - min_pt) / (max_pt - min_pt)
+        centroid = np.mean(points, axis=0)
+        points -= centroid
+        max_distance = np.max(np.linalg.norm(points, axis=1))
+        points /= max_distance
+        vectors -= centroid
+        vectors /= max_distance
         points = points.astype(np.float32)
         vectors = vectors.astype(np.float32)
         min_pt = min_pt.astype(np.float32)

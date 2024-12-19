@@ -24,6 +24,7 @@ def load_obj(obj_file):
             idx = np.arange(len(obj_data)) - 1
             cur_edge = np.concatenate([obj_data, obj_data[idx]], -1)
             [edges.add(tuple(sorted(e))) for e in cur_edge]
+            
     vs = np.array(vs, dtype=np.float64)
     edges = np.array(list(edges))
     return vs, edges

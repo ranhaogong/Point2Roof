@@ -109,10 +109,8 @@ class EdgeAttentionNet(nn.Module):
 
         # 将三者特征进行拼接或累加
         edge_fea = edge_fea + global_fea + att_fea  # 这里可以根据需要使用拼接或累加
-
-        fused_fea = self.multi_scale_fusion(edge_fea)  # 使用 MultiScaleFusion 进行融合
+        fused_fea = self.multi_scale_fusion(edge_fea)
         fused_fea = fused_fea.squeeze(0)
-
         edge_pred = self.cls_fc(self.drop(self.shared_fc(fused_fea)))
         batch_dict['pair_points'] = torch.cat(pair_idx_list, 0)
         batch_dict['edge_score'] = torch.sigmoid(edge_pred).view(-1)
@@ -188,10 +186,11 @@ class MultiScaleFusion(nn.Module):
         self.scale2 = nn.Linear(input_dim * 2, input_dim)
         self.scale3 = nn.Linear(input_dim * 3, input_dim)
 
+    # torch.Size([1, 1044, 256])
     def forward(self, x):
-        scale1_fea = self.scale1(x)
-        scale2_fea = self.scale2(torch.cat([x, scale1_fea], dim=-1))
-        scale3_fea = self.scale3(torch.cat([x, scale2_fea], dim=-1))
+        scale1_fea = self.scale1(x) # torch.Size([1, 1044, 256])
+        scale2_fea = self.scale2(torch.cat([x, scale1_fea], dim=-1)) # torch.Size([1, 1044, 256])
+        scale3_fea = self.scale3(torch.cat([x, scale1_fea, scale2_fea], dim=-1))
         return scale3_fea
 
 class PairedPointAttention(nn.Module):
