@@ -70,6 +70,66 @@ def test_model(model, data_loader, logger):
         logger.info(f'edge_precision: {edge_precision:.4f}, edge_recall: {edge_recall:.4f}, edge_f1: {edge_f1:.4f}')
         logger.info(f'pts_bias: {bias[0]}, {bias[1]}, {bias[2]}')
 
+def save_wireframe(model, data_loader, logger, output_dir):
+    dataloader_iter = iter(data_loader)
+    with tqdm.trange(0, len(data_loader), desc='test', dynamic_ncols=True) as tbar:
+        model.use_edge = True
+        for cur_it in tbar:
+            batch = next(dataloader_iter)
+            load_data_to_gpu(batch)
+            with torch.no_grad():
+                batch = model(batch)
+                load_data_to_cpu(batch)
+            process_predictions(batch, output_dir)
+
+def save_wireframe_to_obj(file_path, keypoints, edges):
+    """
+    保存预测的 wireframe 到 .obj 文件
+    :param file_path: 输出文件路径
+    :param keypoints: 预测的拐点，格式为 Nx3 的数组
+    :param edges: 预测的边，格式为 Mx2 的数组
+    """
+    with open(file_path, 'w') as f:
+        # 保存拐点
+        for pt in keypoints:
+            f.write(f"v {pt[0]:.6f} {pt[1]:.6f} {pt[2]:.6f}\n")
+        
+        # 保存边
+        for edge in edges:
+            f.write(f"l {edge[0] + 1} {edge[1] + 1}\n")  # obj 文件中的索引从 1 开始
+
+def process_predictions(batch, output_dir):
+    """
+    处理预测数据并保存为 .obj 文件
+    :param batch: 包含预测结果的字典
+    :param output_dir: 输出文件夹路径
+    """
+    batch_size = batch['batch_size']
+    pts_pred, pts_refined = batch['keypoint'], batch['refined_keypoint']
+    edge_pred = batch['edge_score']
+    mm_pts = batch['minMaxPt']
+    centroids = batch['centroid']
+    max_distances = batch['max_distance']
+    ids = batch['frame_id']
+
+    idx = 0
+    for i in range(batch_size):
+
+        # 提取属于当前样本的预测点
+        p_pts = pts_refined[pts_pred[:, 0] == i]
+        # 逆变换：从归一化坐标还原原始坐标
+        p_pts = p_pts * max_distances[i] + centroids[i]
+
+        # 提取预测的边
+        num_points = p_pts.shape[0]
+        all_edges = np.array(list(itertools.combinations(range(num_points), 2)))
+        match_edge = all_edges[edge_pred[idx:idx + len(all_edges)] > 0.5]
+        idx += len(all_edges)
+
+        # 保存到 .obj 文件
+        file_path = f"{output_dir}/{ids[i].split('.')[0]}.obj"
+        save_wireframe_to_obj(file_path, p_pts, match_edge)
+
 def eval_process(batch, statistics):
     batch_size = batch['batch_size']
     pts_pred, pts_refined, pts_label = batch['keypoint'], batch['refined_keypoint'], batch['vectors']

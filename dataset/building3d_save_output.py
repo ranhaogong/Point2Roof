@@ -11,8 +11,6 @@ def read_pts(pts_file):
         pts = np.array([line.strip().split(' ')[:3] for line in lines], dtype=np.float64)
     return pts
 
-
-
 def load_obj(obj_file):
     vs, edges = [], set()
     with open(obj_file, 'r') as f:
@@ -41,7 +39,7 @@ def writePoints(points, clsRoad):
             file1.write('\n')
 
 
-class Building3DDataset(Dataset):
+class Building3DDatasetOutput(Dataset):
     def __init__(self, data_path, transform, data_cfg, logger=None):
         with open(data_path, 'r') as f:
             self.file_list = f.readlines()
@@ -64,8 +62,9 @@ class Building3DDataset(Dataset):
     def __getitem__(self, item):
         file_path = self.file_list[item]
         frame_id = file_path.split('/')[-1]
-        points = read_pts(file_path + '/points.xyz')
-        points = self.transform(points)
+        points = read_pts(file_path)
+        if self.transform is not None:
+            points = self.transform(points)
 
         if len(points) > self.npoint:
             idx = np.random.randint(0, len(points), self.npoint)
@@ -77,8 +76,6 @@ class Building3DDataset(Dataset):
 
         points = points[idx]
 
-
-        vectors, edges = load_obj(self.file_list[item] + '/polygon.obj')
         min_pt, max_pt = np.min(points, axis=0), np.max(points, axis=0)
 
 
@@ -93,14 +90,11 @@ class Building3DDataset(Dataset):
         points -= centroid
         max_distance = np.max(np.linalg.norm(points, axis=1))
         points /= max_distance
-        vectors -= centroid
-        vectors /= max_distance
         points = points.astype(np.float32)
-        vectors = vectors.astype(np.float32)
         min_pt = min_pt.astype(np.float32)
         max_pt = max_pt.astype(np.float32)
         pt = np.concatenate(( np.expand_dims(min_pt, 0),  np.expand_dims(max_pt, 0)), axis = 0)
-        data_dict = {'points': points, 'vectors': vectors, 'edges': edges, 'frame_id': frame_id, 'minMaxPt': pt, 'centroid': centroid, 'max_distance': max_distance}
+        data_dict = {'points': points, 'frame_id': frame_id, 'minMaxPt': pt, 'centroid': centroid, 'max_distance': max_distance}
         return data_dict
 
     @staticmethod
@@ -115,15 +109,13 @@ class Building3DDataset(Dataset):
             try:
                 if key == 'points':
                     ret[key] = np.concatenate(val, axis=0).reshape([batch_size, -1, val[0].shape[-1]])
-                elif key in ['vectors', 'edges']:
-                    max_vec = max([len(x) for x in val])
-                    batch_vecs = np.ones((batch_size, max_vec, val[0].shape[-1]), dtype=np.float32) * -1e1
-                    for k in range(batch_size):
-                        batch_vecs[k, :val[k].__len__(), :] = val[k]
-                    ret[key] = batch_vecs
                 elif key in ['frame_id']:
                     ret[key] = val
                 elif key in ['minMaxPt']:
+                    ret[key] = val
+                elif key in ['centroid']:
+                    ret[key] = val
+                elif key in ['max_distance']:
                     ret[key] = val
                 else:
                     ret[key] = np.stack(val, axis=0)
