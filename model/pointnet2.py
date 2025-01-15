@@ -56,12 +56,6 @@ class PointNet2(nn.Module):
                 'offset_label': offset,
                 'cls_label': cls
             })
-            # import pickle
-            # with open('my_data.pkl', 'wb') as f:
-            #     pickle.dump(cls, f)
-            # with open('xyz.pkl', 'wb') as f:
-            #     pickle.dump(xyz, f)
-            # exit()
 
         fea = xyz
         l0_fea = fea.permute(0, 2, 1)

@@ -1,1 +1,1 @@
-/data/haoran/Point2Roof/testmydata/0
+/data/haoran/Point2Roof/testmydata/roof1.ply

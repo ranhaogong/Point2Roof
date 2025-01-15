@@ -3,6 +3,17 @@ from torch.utils.data import Dataset
 from collections import defaultdict
 import os
 import shutil
+import open3d as o3d
+
+def read_ply(pts_file):
+    # 使用 open3d 读取 ply 文件
+    pcd = o3d.io.read_point_cloud(pts_file)
+    
+    # 提取点云中的点数据
+    pts = np.asarray(pcd.points)
+    # 返回前三列数据（即点云的坐标）
+    print(pts)
+    return pts
 
 def read_pts(pts_file):
     with open(pts_file, 'r') as f:
@@ -62,7 +73,13 @@ class Building3DDatasetOutput(Dataset):
     def __getitem__(self, item):
         file_path = self.file_list[item]
         frame_id = file_path.split('/')[-1]
-        points = read_pts(file_path)
+        file_form = file_path.split('.')[-1]
+        if file_form == 'ply':
+            points = read_ply(file_path)
+        elif file_form == 'xyz':
+            points = read_pts(file_path)
+        else:
+            print("none support file form")
         if self.transform is not None:
             points = self.transform(points)
 

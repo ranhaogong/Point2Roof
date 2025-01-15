@@ -5,20 +5,11 @@ import os
 import shutil
 import open3d as o3d
 
-def read_pts(pts_file):
-    with open(pts_file, 'r') as f:
-        lines = f.readlines()
-        pts = np.array([f.strip().split(' ') for f in lines], dtype=np.float64)
-    return pts
+def read_ply(pts_file):
+    point_cloud = o3d.io.read_point_cloud(pts_file)
+    pts = np.asarray(point_cloud.points, dtype=np.float64)
+    return pts[:, :3]
 
-def read_ply(ply_file):
-    # '/data/haoran/dataset/RoofDiffusion/dataset/PoznanRD/roof_point_cloud/BID_1538042_0_cc7775c2-28c0-4f80-aebf-cb4704a23bd1.ply'
-    # 使用 open3d 读取 ply 文件
-    pcd = o3d.io.read_point_cloud(ply_file)
-    
-    # 转换为 numpy 数组
-    points = np.asarray(pcd.points, dtype=np.float64)
-    return points
 
 def load_obj(obj_file):
     vs, edges = [], set()
@@ -28,47 +19,17 @@ def load_obj(obj_file):
         vals = f.strip().split(' ')
         if vals[0] == 'v':
             vs.append(vals[1:])
-        else:
-            obj_data = np.array(vals[1:], dtype=np.int).reshape(-1, 1) - 1
+        elif vals[0] == 'f':
+            split_vals = [int(x.split('//')[0]) for x in vals[1:]]
+            obj_data = np.array(split_vals, dtype=np.int).reshape(-1, 1) - 1
             idx = np.arange(len(obj_data)) - 1
             cur_edge = np.concatenate([obj_data, obj_data[idx]], -1)
             [edges.add(tuple(sorted(e))) for e in cur_edge]
+            
     vs = np.array(vs, dtype=np.float64)
     edges = np.array(list(edges))
     return vs, edges
 
-def extract_before_slash(values):
-    """
-    从列表中提取每个元素在 `//` 之前的数字部分。
-
-    参数:
-        values (list): 包含字符串的列表，格式如 '4//1'。
-    
-    返回:
-        list: 提取后的数字部分。
-    """
-    return [val.split("//")[0] for val in values]
-
-def load_blender_obj(obj_file):
-    vs, edges = [], set()
-    with open(obj_file, 'r') as f:
-        lines = f.readlines()
-    for f in lines:
-        vals = f.strip().split(' ')
-        if vals[0] == '#' or vals[0] == 'o' or vals[0] == 'vn' or vals[0] == 's':
-            continue
-        if vals[0] == 'v':
-            vs.append(vals[1:])
-        else:
-            extracted_values = extract_before_slash(vals[1:])
-            obj_data = np.array(extracted_values, dtype=np.int).reshape(-1, 1) - 1
-            idx = np.arange(len(obj_data)) - 1
-            cur_edge = np.concatenate([obj_data, obj_data[idx]], -1)
-            [edges.add(tuple(sorted(e))) for e in cur_edge]
-    vs = np.array(vs, dtype=np.float64)
-    edges = np.array(list(edges))
-    return vs, edges
-    
 def writePoints(points, clsRoad):
     with open(clsRoad, 'w+') as file1:
         for i in range(len(points)):
@@ -83,22 +44,15 @@ def writePoints(points, clsRoad):
 
 
 class PoznanRDDataset(Dataset):
-    def __init__(self, data_path, training, transform, data_cfg, logger=None):
+    def __init__(self, data_path, transform, data_cfg, logger=None):
         with open(data_path, 'r') as f:
             self.file_list = f.readlines()
         self.file_list = [f.strip() for f in self.file_list]
         flist = []
         for l in self.file_list:
-            file_name = os.path.basename(l)
-            file_name_without_ext = os.path.splitext(file_name)[0]
-            flist.append(file_name_without_ext)
-            
+             flist.append(l)
         self.file_list = flist
-        
-        self.data_path = data_path.rsplit('/', 1)[0]
-        
-        self.training = training
-        
+
         self.npoint = data_cfg.NPOINT
 
         self.transform = transform
@@ -110,12 +64,9 @@ class PoznanRDDataset(Dataset):
         return len(self.file_list)
 
     def __getitem__(self, item):
-        
-        pc_file_path = self.data_path + '/roof_point_cloud/'
-        obj_file_path = self.data_path + '/roof_obj/'
-        frame_id = self.file_list[item]
-        
-        points = read_ply(pc_file_path + frame_id + '.ply')
+        file_path = self.file_list[item]
+        frame_id = file_path.split('/')[-1]
+        points = read_ply(file_path + '/points.ply')
         points = self.transform(points)
 
         if len(points) > self.npoint:
@@ -129,7 +80,7 @@ class PoznanRDDataset(Dataset):
         points = points[idx]
 
 
-        vectors, edges = load_blender_obj(obj_file_path + frame_id + '.obj')
+        vectors, edges = load_obj(self.file_list[item] + '/polygon.obj')
         min_pt, max_pt = np.min(points, axis=0), np.max(points, axis=0)
 
 
@@ -137,15 +88,18 @@ class PoznanRDDataset(Dataset):
         minXYZ = np.min(min_pt)
         min_pt[:] = minXYZ
         max_pt[:] = maxXYZ
-
-        points = (points - min_pt) / (max_pt - min_pt)
-        vectors = (vectors - min_pt) / (max_pt - min_pt)
+        centroid = np.mean(points, axis=0)
+        points -= centroid
+        max_distance = np.max(np.linalg.norm(points, axis=1))
+        points /= max_distance
+        vectors -= centroid
+        vectors /= max_distance
         points = points.astype(np.float32)
         vectors = vectors.astype(np.float32)
         min_pt = min_pt.astype(np.float32)
         max_pt = max_pt.astype(np.float32)
         pt = np.concatenate(( np.expand_dims(min_pt, 0),  np.expand_dims(max_pt, 0)), axis = 0)
-        data_dict = {'points': points, 'vectors': vectors, 'edges': edges, 'frame_id': frame_id, 'minMaxPt': pt}
+        data_dict = {'points': points, 'vectors': vectors, 'edges': edges, 'frame_id': frame_id, 'minMaxPt': pt, 'centroid': centroid, 'max_distance': max_distance}
         return data_dict
 
     @staticmethod

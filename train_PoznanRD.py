@@ -23,8 +23,8 @@ def parse_config():
     parser.add_argument('--data_path', type=str, default='../GithubDeepRoof', help='dataset path')
     parser.add_argument('--cfg_file', type=str, default='./model_cfg.yaml', help='model config for training')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for training')
-    parser.add_argument('--gpu', type=str, default='0', help='gpu for training')
-    parser.add_argument('--extra_tag', type=str, default='PoznanRD_1', help='extra tag for this experiment')
+    parser.add_argument('--gpu', type=str, default='1', help='gpu for training')
+    parser.add_argument('--extra_tag', type=str, default='pts6', help='extra tag for this experiment')
     parser.add_argument('--epochs', type=int, default=90, help='number of epochs to train for')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     args = parser.parse_args()
@@ -35,10 +35,9 @@ def parse_config():
 
 def main():
     args, cfg = parse_config()
-    
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    # torch.cuda.set_device(1)
-
+    print(f"Current GPU: {torch.cuda.current_device()}")
+    print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
     extra_tag = args.extra_tag if args.extra_tag is not None \
             else 'model-%s' % datetime.datetime.now().strftime('%Y%m%d')
     output_dir = cfg.ROOT_DIR / 'output' / extra_tag
@@ -50,8 +49,7 @@ def main():
     logger = common_utils.create_logger(log_file)
 
     logger.info('**********************Start logging**********************')
-    for key, value in cfg.items():
-        logger.info(f"{key}: {value}")
+
     train_loader = build_dataloader_PoznanRDDataset(args.data_path, args.batch_size, cfg.DATA, training=True, logger=logger)
 
     net = RoofNet(cfg.MODEL)
@@ -62,6 +60,7 @@ def main():
     last_epoch = -1
     ckpt_list = glob.glob(str(ckpt_dir / '*checkpoint_epoch_*.pth'))
     if len(ckpt_list) > 0:
+        print("ckpt_list[-1]: ", ckpt_list[-1])
         ckpt_list.sort(key=os.path.getmtime)
         it, start_epoch = model_utils.load_params_with_optimizer(
             net, ckpt_list[-1], optimizer=optimizer, logger=logger

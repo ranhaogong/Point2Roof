@@ -5,8 +5,8 @@ import argparse
 import datetime
 import glob
 import torch.distributed as dist
-from dataset.data_utils import build_dataloader_PoznanRDDataset
-from test_util import test_model
+from dataset.data_utils import build_dataloader_CustomOutput
+from test_util import save_wireframe
 from model.roofnet import RoofNet
 from torch import optim
 from utils import common_utils
@@ -45,7 +45,7 @@ def main():
         logger.info('{:16} {}'.format(key, val))
     common_utils.log_config_to_file(cfg, logger=logger)
 
-    test_loader = build_dataloader_PoznanRDDataset(args.data_path, args.batch_size, cfg.DATA, training=False, logger=logger)
+    test_loader = build_dataloader_CustomOutput(args.data_path, args.batch_size, cfg.DATA, training=False, logger=logger)
     net = RoofNet(cfg.MODEL)
     net.cuda()
     net.eval()
@@ -60,7 +60,9 @@ def main():
     logger.info('**********************Start testing**********************')
     # logger.info(net)
 
-    test_model(net, test_loader, logger)
+    save_wireframe(net, test_loader, logger, output_dir)
+
+    
 
 
 if __name__ == '__main__':
