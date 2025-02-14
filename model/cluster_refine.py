@@ -41,7 +41,6 @@ class ClusterRefineNet(nn.Module):
             )
             self.loss_weight = self.model_cfg.LossWeight
 
-
         self.init_weights()
 
     def init_weights(self):
@@ -61,9 +60,6 @@ class ClusterRefineNet(nn.Module):
         offset = batch_dict['point_pred_offset']
         # pts_score: N
         pts_score = batch_dict['point_pred_score']
-        # import pickle
-        # with open('pts_score.pkl', 'wb') as file:
-        #     pickle.dump(pts_score, file)
         score_thresh = self.model_cfg.ScoreThresh
         # offset_pts: Nx3
         offset_pts[pts_score > score_thresh] += offset[pts_score > score_thresh]

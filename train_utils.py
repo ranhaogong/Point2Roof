@@ -56,7 +56,7 @@ def train_model(model, optim, data_loader, lr_sch, start_it, start_epoch, total_
         for e in tbar:
             if sampler is not None:
                 sampler.set_epoch(e)
-            if e > 10:
+            if e > 5:
                 model.use_edge = True
             accumulated_iter = train_one_epoch(model, optim, data_loader, accumulated_iter, tbar,
                                                leave_pbar=(e + 1 == total_epochs))
