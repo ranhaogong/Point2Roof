@@ -1,8 +1,8 @@
 DATA:
   NPOINT: 1024
 COLOR: True
-NIR: True
-INTENSITY: True
+NIR: False
+INTENSITY: False
 MODEL:
   PointNet2:
     PosRadius: 0.15

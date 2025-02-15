@@ -23,9 +23,13 @@ except ImportError:
 from .serialization import encode
 
 class PointNet2(nn.Module):
-    def __init__(self, model_cfg, in_channel=3):
+    def __init__(self, model_cfg, in_channel=3, color=False, nir=False, intensity=False):
         super().__init__()
         self.model_cfg = model_cfg
+        self.color = color
+        self.nir = nir
+        self.intensity = intensity
+        self.in_channel = in_channel
         # 使用 PointTransformerV3 替换 PointNet++ 的特征提取部分
         self.ptv3 = PointTransformerV3(
             in_channels=in_channel,
@@ -88,7 +92,9 @@ class PointNet2(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, batch_dict):
-        xyz = batch_dict['points']
+        points = batch_dict['points']
+        xyz = points[:, :, :3]
+        
         if self.training:
             vectors = batch_dict['vectors']
             offset, cls = self.assign_targets(xyz, vectors, self.model_cfg.PosRadius)
@@ -100,9 +106,15 @@ class PointNet2(nn.Module):
         batch_size = xyz.size(0)
         n_pts = xyz.size(1)
         batch_vals = torch.arange(batch_size).view(-1, 1).expand(-1, n_pts).reshape(-1).cuda()
+        # if self.color == True or self.nir == True or self.intensity == True:
+        #     feature = points[:, :, 3:]
+        #     feature = feature.reshape(-1, self.in_channel - 3).cuda()
+        # else:
+        #     feature = coord
+        feature = points.reshape(-1, self.in_channel).cuda()
         # 使用 PointTransformerV3 提取特征
         point_dict = {
-            'feat': coord,
+            'feat': feature,
             'coord': coord,  # 坐标 (B* N, 3)
             # 'batch': torch.arange(xyz.size(0)),  # 批次索引
             'batch': batch_vals,
@@ -135,7 +147,7 @@ class PointNet2(nn.Module):
             'pts_offset_loss': reg_loss.item(),
             'pts_loss': loss.item()
         })
-
+        
         pred_cls = pred_cls.squeeze(-1)
         label_cls = label_cls.squeeze(-1)
         pred_logit = torch.sigmoid(pred_cls)

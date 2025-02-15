@@ -70,7 +70,7 @@ def test_model(model, data_loader, logger):
         logger.info(f'edge_precision: {edge_precision:.4f}, edge_recall: {edge_recall:.4f}, edge_f1: {edge_f1:.4f}')
         logger.info(f'pts_bias: {bias[0]}, {bias[1]}, {bias[2]}')
 
-def save_wireframe(model, data_loader, logger, output_dir):
+def save_wireframe(model, data_loader, output_dir):
     dataloader_iter = iter(data_loader)
     with tqdm.trange(0, len(data_loader), desc='test', dynamic_ncols=True) as tbar:
         model.use_edge = True

@@ -34,18 +34,18 @@ def main():
     output_dir = cfg.ROOT_DIR / 'output' / extra_tag
     assert output_dir.exists(), '%s does not exist!!!' % str(output_dir)
     ckpt_dir = output_dir / 'ckpt'
-    output_dir = output_dir / 'test'
+    output_dir = output_dir / 'save'
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    log_file = output_dir / 'log.txt'
-    logger = common_utils.create_logger(log_file)
+    # log_file = output_dir / 'log.txt'
+    # logger = common_utils.create_logger(log_file)
 
-    logger.info('**********************Start logging**********************')
-    for key, val in vars(args).items():
-        logger.info('{:16} {}'.format(key, val))
-    common_utils.log_config_to_file(cfg, logger=logger)
+    # logger.info('**********************Start logging**********************')
+    # for key, val in vars(args).items():
+    #     logger.info('{:16} {}'.format(key, val))
+    # common_utils.log_config_to_file(cfg, logger=logger)
 
-    test_loader = build_dataloader_Building3DDatasetOutput(args.data_path, args.batch_size, cfg.DATA, training=False, logger=logger)
+    test_loader = build_dataloader_Building3DDatasetOutput(args.data_path, args.batch_size, cfg.DATA, training=False, logger=None)
     net = RoofNet(cfg.MODEL)
     net.cuda()
     net.eval()
@@ -54,13 +54,13 @@ def main():
     print("ckpt_list: ", ckpt_list)
     if len(ckpt_list) > 0:
         ckpt_list.sort(key=os.path.getmtime)
-        model_utils.load_params(net, ckpt_list[-1], logger=logger)
+        model_utils.load_params(net, ckpt_list[-1], logger=None)
         print("pth: ", ckpt_list[-1])
 
-    logger.info('**********************Start testing**********************')
+    print('**********************Start saving**********************')
     # logger.info(net)
 
-    save_wireframe(net, test_loader, logger, output_dir)
+    save_wireframe(net, test_loader, output_dir)
 
     
 

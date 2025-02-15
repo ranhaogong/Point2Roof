@@ -57,6 +57,7 @@ class ClusterRefineNet(nn.Module):
 # tips: change from batch to stack
     def forward(self, batch_dict):
         offset_pts = batch_dict['points'].clone()
+        offset_pts = offset_pts[:, :, :3]
         offset = batch_dict['point_pred_offset']
         # pts_score: N
         pts_score = batch_dict['point_pred_score']

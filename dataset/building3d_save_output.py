@@ -12,7 +12,7 @@ def read_ply(pts_file):
     # 提取点云中的点数据
     pts = np.asarray(pcd.points)
     # 返回前三列数据（即点云的坐标）
-    print(pts)
+    # print(pts)
     return pts
 
 def read_pts(pts_file):
@@ -95,14 +95,11 @@ class Building3DDatasetOutput(Dataset):
 
         min_pt, max_pt = np.min(points, axis=0), np.max(points, axis=0)
 
-
         maxXYZ = np.max(max_pt)
         minXYZ = np.min(min_pt)
         min_pt[:] = minXYZ
         max_pt[:] = maxXYZ
 
-        # points = (points - min_pt) / (max_pt - min_pt)
-        # vectors = (vectors - min_pt) / (max_pt - min_pt)
         centroid = np.mean(points, axis=0)
         points -= centroid
         max_distance = np.max(np.linalg.norm(points, axis=1))

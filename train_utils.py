@@ -7,11 +7,11 @@ from test_util import test_model
 
 
 def train_one_epoch(model, optim, data_loader, accumulated_iter,
-                    tbar, leave_pbar=False):
+                    tbar, leave_pbar=False, logger = None):
     total_it_each_epoch = len(data_loader)
     dataloader_iter = iter(data_loader)
     pbar = tqdm.tqdm(total=total_it_each_epoch, leave=leave_pbar, desc='train', dynamic_ncols=True)
-
+    total_loss = 0.0 
     for cur_it in range(total_it_each_epoch):
         try:
             batch = next(dataloader_iter)
@@ -36,20 +36,20 @@ def train_one_epoch(model, optim, data_loader, accumulated_iter,
         accumulated_iter += 1
         disp_dict.update(loss_dict)
         disp_dict.update({'loss': loss.item(), 'lr': cur_lr})
-
+        total_loss += loss.item()
         # log to console and tensorboard
-
         pbar.update()
         pbar.set_postfix(dict(total_it=accumulated_iter))
         tbar.set_postfix(disp_dict)
         tbar.refresh()
 
     pbar.close()
-    return accumulated_iter
+    avg_loss = total_loss / total_it_each_epoch
+    return accumulated_iter, avg_loss
 
 
-def train_model(model, optim, data_loader, lr_sch, start_it, start_epoch, total_epochs, ckpt_save_dir, sampler=None,
-                max_ckpt_save_num=5):
+def train_model(model, optim, data_loader, lr_sch, start_it, start_epoch, total_epochs, ckpt_save_dir, logger = None, sampler=None,
+                max_ckpt_save_num=5, log_file = None):
 
     with tqdm.trange(start_epoch, total_epochs, desc='epochs', dynamic_ncols=True) as tbar:
         accumulated_iter = start_it
@@ -58,8 +58,8 @@ def train_model(model, optim, data_loader, lr_sch, start_it, start_epoch, total_
                 sampler.set_epoch(e)
             if e > 5:
                 model.use_edge = True
-            accumulated_iter = train_one_epoch(model, optim, data_loader, accumulated_iter, tbar,
-                                               leave_pbar=(e + 1 == total_epochs))
+            accumulated_iter, avg_loss_per_epoch = train_one_epoch(model, optim, data_loader, accumulated_iter, tbar,
+                                               leave_pbar=(e + 1 == total_epochs), logger = logger)
             lr_sch.step()
             lr = max(optim.param_groups[0]['lr'], 1e-6)
             for param_group in optim.param_groups:
@@ -75,6 +75,8 @@ def train_model(model, optim, data_loader, lr_sch, start_it, start_epoch, total_
             save_checkpoint(
                 checkpoint_state(model, optim, e + 1, accumulated_iter), filename=ckpt_name,
             )
+            with open(log_file, 'a') as f:  # 'a' 模式表示追加写入
+                f.write(f'Epoch {e}: Loss = {avg_loss_per_epoch}\n')
 
 
 

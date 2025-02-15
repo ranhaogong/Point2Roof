@@ -16,7 +16,7 @@ from model import model_utils
 def parse_config():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, default='../GithubDeepRoof', help='dataset path')
-    parser.add_argument('--cfg_file', type=str, default='./model_cfg.yaml', help='model config for training')
+    parser.add_argument('--cfg_file', type=str, default='./cfg/model_cfg.yaml', help='model config for training')
     parser.add_argument('--batch_size', type=int, default=1, help='batch size for training')
     parser.add_argument('--gpu', type=str, default='1', help='gpu for training')
     parser.add_argument('--test_tag', type=str, default='pts6', help='extra tag for this experiment')

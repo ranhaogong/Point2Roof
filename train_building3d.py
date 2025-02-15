@@ -50,9 +50,9 @@ def main():
 
     logger.info('**********************Start logging**********************')
 
-    train_loader = build_dataloader_Building3DDataset(args.data_path, args.batch_size, cfg.DATA, training=True, logger=logger)
+    train_loader = build_dataloader_Building3DDataset(args.data_path, args.batch_size, cfg.DATA, training=True, logger=logger, color=cfg.COLOR, nir=cfg.NIR, intensity=cfg.INTENSITY)
 
-    net = RoofNet(cfg.MODEL)
+    net = RoofNet(cfg.MODEL, color=cfg.COLOR, nir=cfg.NIR, intensity=cfg.INTENSITY)
     net.cuda()
     optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=1e-3)
 
@@ -72,8 +72,9 @@ def main():
     net = net.train()
     logger.info('**********************Start training**********************')
     #logger.info(net)
+    
 
-    train_model(net, optimizer, train_loader, scheduler, it, start_epoch, args.epochs, ckpt_dir)
+    train_model(net, optimizer, train_loader, scheduler, it, start_epoch, args.epochs, ckpt_dir, logger = logger, log_file = log_file)
 
 
 if __name__ == '__main__':
