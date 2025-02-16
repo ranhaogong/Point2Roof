@@ -170,6 +170,11 @@ class Building3DDataset(Dataset):
             vectors /= max_distance_xyz
             
             # 对rgb标准化
+            if color == True:
+                color_data = points[:, 3:6]  # 提取 RGB 数据（假设 points 的 3:6 列是 RGB 值）
+                color_data = color_data / 255.0  # 将 RGB 值从 [0, 255] 归一化到 [0, 1]
+                color_data = (color_data - color_data.mean(axis=0)) / color_data.std(axis=0)  # 标准化（均值为 0，标准差为 1）
+                points[:, 3:6] = color_data  # 将标准化后的 RGB 值写回 points
 
             # 转换为 float32 类型
             points = points.astype(np.float32)
